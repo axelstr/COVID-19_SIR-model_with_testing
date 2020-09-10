@@ -9,6 +9,12 @@ import random
 import os
 import seaborn as sns
 
+from matplotlib import rc
+# rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+# for Palatino and other serif fonts use:
+# rc('font', **{'family': 'serif', 'serif': ['Palatino']})
+rc('text', usetex=True)
+
 
 class Model:
     def __init__(self, duration=100, timeStep=1,  # days
@@ -38,8 +44,7 @@ class Model:
                                             self.TSymptomatic,
                                             self.PSymptomatic)
         self.PdfItoR = self.__getPoissonPdf(self.NTimeSteps,
-                                            self.TRecovery,
-                                            1-self.PSymptomatic)
+                                            self.TRecovery)
         self.PdfQtoR = self.__getPoissonPdf(self.NTimeSteps,
                                             self.TRecovery)
 
@@ -51,55 +56,56 @@ class Model:
         ts = list(range(0, self.Duration, self.TimeStep))
         zeros = [0 for _ in range(1, self.NTimeSteps)]
         S = np.array([self.InitialSusceptible] + zeros, dtype='f')
-        I = np.array([self.InitialInfected] + zeros, dtype='f')
-        I_byInfectedTime = np.array([self.InitialInfected] + zeros, dtype='f')
-        # I_left = np.array([self.InitialInfected] + zeros,
-        #                   dtype='f')
-        # Q = np.array([self.InitialQueued] + zeros, dtype='f')
-        # Q_left = np.array([self.InitialQueued] + zeros, dtype='f')
+        I_nq = np.array([self.InitialInfected] + zeros, dtype='f')
+        I_nq_byInfectedTime = np.array(
+            [self.InitialInfected] + zeros, dtype='f')
+        I_q = np.array([self.InitialQueued] + zeros, dtype='f')
+        I_q_byInfectedTime = np.array([self.InitialQueued] + zeros, dtype='f')
         R = np.array([self.InitialRemoved] + zeros, dtype='f')
 
         for i in range(0, self.NTimeSteps-1):
-            S_to_I = self.__S_to_I(i, S, I)
-            # I_to_Q, Imoved = self.__I_to_Q(i, I_left)
-            I_to_R = self.__I_to_R(i, I_byInfectedTime)
-            # Q_to_R, Qmoved = self.__Q_to_R(i, I, Q, R, S)
-            # Q_left = self.__removeMoved(Q_left, Qmoved)
+            # Euler forward
+            S_to_I_nq = self.__S_to_I(i, S, I_nq, I_q)
+            I_nq_to_R = self.__I_nq_to_R(i, I_nq_byInfectedTime)
+            I_q_to_R = self.__I_q_to_R(i, I_q_byInfectedTime)
 
-            S[i+1] = S[i] - S_to_I
-            I[i+1] = I[i] + S_to_I - I_to_R  # - I_to_Q
-            I_byInfectedTime[i+1] = S_to_I
-            # I_left[i+1] = I[i+1]
-            # Q[i+1] = Q[i] + I_to_Q - Q_to_R
-            # Q_left[i+1] = Q[i+1]
-            R[i+1] = R[i] + I_to_R  # + Q_to_R
+            # Step forward
+            S[i+1] = S[i] - S_to_I_nq
+            I_nq[i+1] = I_nq[i] + S_to_I_nq - I_nq_to_R
+            I_nq_byInfectedTime[i+1] = S_to_I_nq
+            I_q[i+1] = I_q[i] - I_q_to_R
+            R[i+1] = R[i] + I_nq_to_R + I_q_to_R
+
+            # Queue infected that shows symptomps
+            n = min(i+1, len(self.PdfItoQ))
+            for k in range(n):
+                q = I_nq_byInfectedTime[i-k]*self.PdfItoQ[k]
+                I_nq_byInfectedTime[i-k] -= q
+                I_q_byInfectedTime[i-k] += q
+                I_nq[i+1] -= q
+                I_q[i+1] += q
 
         self.Results = pd.DataFrame.from_dict({"Time": ts,
                                                "Susceptible": S,
-                                               "Infected": I,
-                                               #    "Queued": Q,
+                                               "Infected": np.sum([I_nq, I_q], axis=0),
+                                               "Queued": I_q,
                                                "Removed": R})
         self.HasModelRun = True
 
-    def __S_to_I(self, i, S, I):
-        f = (self.RateSI * S[i] * (I[i])) \
+    def __S_to_I(self, i, S, I, I_Q):
+        f = (self.RateSI * S[i] * (I[i]+I_Q[i])) \
             / self.TotalIndividuals
         return f
 
-    def __I_to_Q(self, i, I_left):
-        f = self.__conv(I_left, self.PdfItoQ, i)
+    def __I_nq_to_R(self, i, I_byInfectedTime):
+        f = self.__conv(I_byInfectedTime, self.PdfItoR, i)
         return f
 
-    def __I_to_R(self, i, I_left):
-        f = self.__conv(I_left, self.PdfItoR, i)
-        return f
-
-    def __Q_to_R(self, i, I, Q, R, S):
-        f = self.__conv(Q, self.PdfItoR, i)
+    def __I_q_to_R(self, i, I_Q_byInfectedTime):
+        f = self.__conv(I_Q_byInfectedTime, self.PdfQtoR, i)
         return f
 
     def __conv(self, array, pdf, index):
-        print(sum(pdf))
         n = min(index+1, len(pdf), len(array))
         s = 0
         for k in range(0, n):
@@ -124,29 +130,38 @@ class Model:
         arrayLength = min(50, arrayLength)
 
         for i in range(1, arrayLength):
-            pdf.append(pow*exp/factorial*totalProbability)
+            pdf.append(pow*exp/factorial)
             pow *= mean
             factorial *= i
 
-        return np.array(pdf)
+        return np.array(pdf, dtype='f')*totalProbability
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
         if not self.HasModelRun:
             print('Error: Please call Model.run() before plotting.')
             return
+
+        plt.subplot(2, 1, 1)
+        plt.plot(self.Results['Time'],
+                 self.Results['Queued'], color='orange')
+        plt.legend(['Queued'], prop={
+                   'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 1.02), ncol=3, fancybox=True, shadow=True)
+        plt.ylabel('Population')
+        plt.title(title)
+
+        plt.subplot(2, 1, 2)
         plt.plot(self.Results['Time'],
                  self.Results['Susceptible'], color='green')
         plt.plot(self.Results['Time'],
                  self.Results['Infected'], color='red')
-        # plt.plot(self.Results['Time'],
-        #          self.Results['Queued'], color='orange')
         plt.plot(self.Results['Time'],
                  self.Results['Removed'], color='gray')
+        plt.plot(self.Results['Time'],
+                 np.sum([self.Results['Susceptible'], self.Results['Infected'], self.Results['Removed']], axis=0), color='black')
         plt.xlabel('Time')
         plt.ylabel('Population')
-        plt.legend(['Susceptible', 'Infected', 'Removed'], prop={
+        plt.legend(['Susceptible', 'Infected', 'Removed', 'Total'], prop={
                    'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 1.02), ncol=3, fancybox=True, shadow=True)
-        plt.title(title)
         plt.savefig(fileName, dpi=300)
         plt.close()
         if openFile:
