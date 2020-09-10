@@ -11,9 +11,9 @@ import seaborn as sns
 
 
 class Model:
-    def __init__(self, duration=365, timeStep=1,  # days
+    def __init__(self, duration=100, timeStep=1,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
-                 rateSI=0.05, rateIR=0.01,  # per timeStep
+                 rateSI=0.1,  # per timeStep
                  servers=1000, serverMu=1, timeForTest=1,  # serverMu in days
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  balking=None, reneging=None
@@ -26,7 +26,6 @@ class Model:
         self.InitialQueued = queued
         self.InitialRemoved = removed
         self.RateSI = rateSI
-        self.RateIR = rateIR
 
         self.Servers = servers/timeStep
         self.ServerMu = serverMu/timeStep
@@ -36,9 +35,12 @@ class Model:
         self.TRecovery = tRecovery/timeStep
 
         self.PdfItoQ = self.__getPoissonPdf(self.NTimeSteps,
-                                            self.TSymptomatic)
-        self.PdfItoQ = [p*self.PSymptomatic for p in self.PdfItoQ]
+                                            self.TSymptomatic,
+                                            self.PSymptomatic)
         self.PdfItoR = self.__getPoissonPdf(self.NTimeSteps,
+                                            self.TRecovery,
+                                            1-self.PSymptomatic)
+        self.PdfQtoR = self.__getPoissonPdf(self.NTimeSteps,
                                             self.TRecovery)
 
         self.TotalIndividuals = susceptible + infected + removed
@@ -50,23 +52,23 @@ class Model:
         zeros = [0 for _ in range(1, self.NTimeSteps)]
         S = np.array([self.InitialSusceptible] + zeros, dtype='f')
         I = np.array([self.InitialInfected] + zeros, dtype='f')
-        I_left = np.array([self.InitialInfected] + zeros,
-                          dtype='f')
-        Q = np.array([self.InitialQueued] + zeros, dtype='f')
-        Q_left = np.array([self.InitialQueued] + zeros, dtype='f')
+        I_byInfectedTime = np.array([self.InitialInfected] + zeros, dtype='f')
+        # I_left = np.array([self.InitialInfected] + zeros,
+        #                   dtype='f')
+        # Q = np.array([self.InitialQueued] + zeros, dtype='f')
+        # Q_left = np.array([self.InitialQueued] + zeros, dtype='f')
         R = np.array([self.InitialRemoved] + zeros, dtype='f')
 
         for i in range(0, self.NTimeSteps-1):
-            S_to_I = self.__S_to_I(i, S, I, Q)
+            S_to_I = self.__S_to_I(i, S, I)
             # I_to_Q, Imoved = self.__I_to_Q(i, I_left)
-            # I_left = self.__removeMoved(I_left, Imoved)
-            I_to_R, Imoved = self.__I_to_R(i, I_left)
-            I_left = self.__removeMoved(I_left, Imoved)
-            Q_to_R, Qmoved = self.__Q_to_R(i, I, Q, R, S)
-            Q_left = self.__removeMoved(Q_left, Qmoved)
+            I_to_R = self.__I_to_R(i, I_byInfectedTime)
+            # Q_to_R, Qmoved = self.__Q_to_R(i, I, Q, R, S)
+            # Q_left = self.__removeMoved(Q_left, Qmoved)
 
             S[i+1] = S[i] - S_to_I
             I[i+1] = I[i] + S_to_I - I_to_R  # - I_to_Q
+            I_byInfectedTime[i+1] = S_to_I
             # I_left[i+1] = I[i+1]
             # Q[i+1] = Q[i] + I_to_Q - Q_to_R
             # Q_left[i+1] = Q[i+1]
@@ -79,37 +81,41 @@ class Model:
                                                "Removed": R})
         self.HasModelRun = True
 
-    def __S_to_I(self, i, S, I, Q):
-        f = (self.RateSI * S[i] * (I[i] + Q[i])) \
+    def __S_to_I(self, i, S, I):
+        f = (self.RateSI * S[i] * (I[i])) \
             / self.TotalIndividuals
         return f
 
     def __I_to_Q(self, i, I_left):
-        f, moved = self.__conv(I_left, self.PdfItoQ, i)
-        return f, moved
+        f = self.__conv(I_left, self.PdfItoQ, i)
+        return f
 
     def __I_to_R(self, i, I_left):
-        f, moved = self.__conv(I_left, self.PdfItoR, i)
-        return f, moved
+        f = self.__conv(I_left, self.PdfItoR, i)
+        return f
 
     def __Q_to_R(self, i, I, Q, R, S):
-        f, moved = self.__conv(Q, self.PdfItoR, i)
-        return f, moved
+        f = self.__conv(Q, self.PdfItoR, i)
+        return f
 
-    def __conv(self, a, b, index):
-        n = min(index+1, len(b), len(a))
-        aMoved = np.zeros(index+1)
+    def __conv(self, array, pdf, index):
+        print(sum(pdf))
+        n = min(index+1, len(pdf), len(array))
+        s = 0
         for k in range(0, n):
-            aMoved[index-k] = a[index-k]*b[k]
+            s += array[index-k]*pdf[k]
 
-        return sum(aMoved), aMoved
+        if s > sum(array):
+            _ = 1
+
+        return s
 
     def __removeMoved(self, array, moved):
         for i in range(min(len(array), len(moved))):
             array[i] = array[i] - moved[i]
         return array
 
-    def __getPoissonPdf(self, arrayLength, mean):
+    def __getPoissonPdf(self, arrayLength, mean, totalProbability=1):
         pow = 1
         factorial = 1
         exp = np.exp(-mean)
@@ -118,7 +124,7 @@ class Model:
         arrayLength = min(50, arrayLength)
 
         for i in range(1, arrayLength):
-            pdf.append(pow*exp/factorial)
+            pdf.append(pow*exp/factorial*totalProbability)
             pow *= mean
             factorial *= i
 

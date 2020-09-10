@@ -2,9 +2,9 @@ from model import Model
 
 
 def main():
-    model = Model(duration=365, servers=0)
+    model = Model(servers=0, pSymptomatic=0)
     model.run()
-    model.plot('example_simulation.png')
+    model.plot()
 
 
 if __name__ == '__main__':
