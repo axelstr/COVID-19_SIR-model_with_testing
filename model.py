@@ -120,8 +120,10 @@ class Model:
 
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedQueued']],
-                      labels=['Infected'], colors=['salmon'])
+                      [self.Results['InfectedQueued'],
+                       self.Results['InfectedQueued']],
+                      labels=['Infected', 'Susceptible (dummy data)'],
+                      colors=['salmon', 'lightgreen'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.ylabel('Queue')
@@ -135,19 +137,14 @@ class Model:
             labelbottom=False)
 
         plt.subplot(3, 1, 2)
-        plt.plot(self.Results['Time'],
-                 self.Results['Infected'], color='green')
-        plt.plot(self.Results['Time'],
-                 self.Results['InfectedInfective'], color='red')
-        plt.plot(self.Results['Time'],
-                 self.Results['InfectedSymptomatic'], color='orange')
-        plt.plot(self.Results['Time'],
-                 self.Results['InfectedQueued'], color='blue')
-        plt.plot(self.Results['Time'],
-                 self.Results['InfectedIsolated'], color='gray')
-        plt.ylabel('Infective')
-        plt.legend(['Total', 'Infective', 'Symptomatic', 'Queued', 'Isolated'],
-                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['InfectedInfective'],
+                       self.Results['InfectedIsolated']],
+                      labels=['Infective', 'Isolated'],
+                      colors=['salmon', 'dimgray'])
+        plt.ylabel('Infected')
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
         # Remove x-tick
         plt.tick_params(
             axis='x',
