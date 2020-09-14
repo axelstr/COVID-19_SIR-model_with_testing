@@ -22,7 +22,6 @@ class Person:
         self.IsIsolated = False
 
     def Advance(self, t):
-
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
@@ -40,6 +39,7 @@ class Person:
             self.PoissonRandomizer.fromMean(self.TSymptomatic)
         self.RecoverAt = t+self.PoissonRandomizer.fromMean(self.TRecovery)
         # TODO: Randomize, some never gets symptomatic
+        # TODO: Relate mean T to timestep
 
     def Queue(self, t):
         self.ShouldQueue = False
@@ -59,6 +59,7 @@ class Person:
             pass
 
         if self.Stage == "I":
+            # TODO: Delay with time to get result
             self.IsInfective = False  # Can't infect since isolated
             self.IsQueued = False
             self.IsIsolated = True

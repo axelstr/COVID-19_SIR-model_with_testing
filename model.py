@@ -75,7 +75,6 @@ class Model:
             state.UpdateState(self)
 
             # Infect
-            # TODO: Not np.ceil, use np.round to closes int (including 0)
             S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveIDs)) /
                                         self.TotalIndividuals))
             if S_to_I_count > 0:
@@ -111,10 +110,8 @@ class Model:
         results['Removed'].append(len(state.RemovedIDs))
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
-        # TODO: https://python-graph-gallery.com/251-stacked-area-chart-with-seaborn-style/
         startTime = 0
         endTime = max(self.Results['Time'])
-        self.Results['Time']
         if not self.HasModelRun:
             print('Error: Please call Model.run() before plotting.')
             return
@@ -131,7 +128,6 @@ class Model:
                    ncol=1, fancybox=True, shadow=True)
         plt.ylabel('Queued')
         plt.title(title)
-        # Remove x-tick
         plt.xlim(startTime, endTime)
         plt.tick_params(
             axis='x',
@@ -150,7 +146,6 @@ class Model:
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
-        # Remove x-tick
         plt.tick_params(
             axis='x',
             which='both',
@@ -159,7 +154,6 @@ class Model:
             labelbottom=False)
 
         plt.subplot(3, 1, 3)
-        # TODO: Stacking plot
         plt.stackplot(self.Results['Time'],
                       [self.Results['Infected'], self.Results['Susceptible'],
                        self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],

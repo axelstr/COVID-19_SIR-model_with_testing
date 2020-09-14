@@ -15,5 +15,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-    os.system('python example_simulation.py')
-    os.system('python example_analysis.py')
+    # os.system('python example_simulation.py')
+    # os.system('python example_analysis.py')
