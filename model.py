@@ -116,13 +116,23 @@ class Model:
             print('Error: Please call Model.run() before plotting.')
             return
 
+        sns.set_theme(style="darkgrid")
+
         plt.subplot(3, 1, 1)
-        plt.plot(self.Results['Time'],
-                 self.Results['InfectedQueued'], color='orange')
-        plt.legend(['Queued'],
-                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['InfectedQueued']],
+                      labels=['Infected'], colors=['salmon'])
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
         plt.ylabel('Queue')
         plt.title(title)
+        # Remove x-tick
+        plt.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
 
         plt.subplot(3, 1, 2)
         plt.plot(self.Results['Time'],
@@ -138,21 +148,24 @@ class Model:
         plt.ylabel('Infective')
         plt.legend(['Total', 'Infective', 'Symptomatic', 'Queued', 'Isolated'],
                    bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+        # Remove x-tick
+        plt.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
 
         plt.subplot(3, 1, 3)
         # TODO: Stacking plot
-        plt.plot(self.Results['Time'],
-                 self.Results['Susceptible'], color='green')
-        plt.plot(self.Results['Time'],
-                 self.Results['Infected'], color='red')
-        plt.plot(self.Results['Time'],
-                 self.Results['Removed'], color='gray')
-        plt.plot(self.Results['Time'],
-                 np.sum([self.Results['Susceptible'], self.Results['Infected'], self.Results['Removed']], axis=0), color='black')
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['Infected'], self.Results['Susceptible'],
+                       self.Results['Removed']], labels=['I', 'S', 'R'],
+                      colors=['salmon', 'lightgreen', 'dimgray'])
         plt.xlabel('Time')
         plt.ylabel('Population')
-        plt.legend(['Susceptible', 'Infected', 'Removed', 'Total'],
-                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
         plt.savefig(fileName, dpi=300)
         plt.close()
         if openFile:

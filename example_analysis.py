@@ -1,7 +1,10 @@
+from matplotlib import rc
 import os
 from model import Model
 import matplotlib.pyplot as plt
-from matplotlib import rc
+import seaborn as sns
+sns.set_theme(style="darkgrid")
+
 rc('text', usetex=True)
 
 model1 = Model(rateSI=0.01)
