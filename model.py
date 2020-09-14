@@ -42,10 +42,14 @@ class Model:
         self.Results = None
         self.HasModelRun = False
 
-        self.People = [Person("S") for i in range(susceptible)] \
-            + [Person("I") for i in range(infected)] \
-            + [Person("Q") for i in range(infected)] \
-            + [Person("R") for i in range(removed)]
+        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery)
+                       for i in range(susceptible)] \
+            + [Person("I", pSymptomatic, tSymptomatic, tRecovery)
+               for i in range(infected)] \
+            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery)
+               for i in range(infected)] \
+            + [Person("R", pSymptomatic, tSymptomatic, tRecovery)
+               for i in range(removed)]
 
     def run(self):
         ts = list(range(0, self.Duration, self.TimeStep))
@@ -107,6 +111,7 @@ class Model:
         results['Removed'].append(len(state.RemovedIDs))
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
+        # TODO: https://python-graph-gallery.com/251-stacked-area-chart-with-seaborn-style/
         if not self.HasModelRun:
             print('Error: Please call Model.run() before plotting.')
             return

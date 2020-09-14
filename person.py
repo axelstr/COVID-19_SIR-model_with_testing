@@ -1,8 +1,16 @@
+from poisson_randomizer import PoissonRandomizer
+
+
 class Person:
     """Person object.
     """
 
-    def __init__(self, deseaseStage="S"):
+    def __init__(self, deseaseStage, pSymptomatic, tSymptomatic, tRecovery):
+        self.PoissonRandomizer = PoissonRandomizer()
+        self.PSymptomatic = pSymptomatic
+        self.TSymptomatic = tSymptomatic
+        self.TRecovery = tRecovery
+
         self.Stage = deseaseStage
         if deseaseStage == "I":
             self.Infect(0)
@@ -16,8 +24,6 @@ class Person:
     def Advance(self, t):
 
         if self.Stage == "I":
-            if t >= self.SymptomaticAt:
-                _ = 1
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
             if (not self.IsSymptomatic) and t >= self.SymptomaticAt:
@@ -30,8 +36,9 @@ class Person:
     def Infect(self, t):
         self.Stage = "I"
         self.InfectiveAt = t+0
-        self.SymptomaticAt = t+2
-        self.RecoverAt = t+14
+        self.SymptomaticAt = t + \
+            self.PoissonRandomizer.fromMean(self.TSymptomatic)
+        self.RecoverAt = t+self.PoissonRandomizer.fromMean(self.TRecovery)
         # TODO: Randomize, some never gets symptomatic
 
     def Queue(self, t):
