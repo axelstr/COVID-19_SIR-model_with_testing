@@ -10,100 +10,145 @@ import os
 import seaborn as sns
 
 from person import Person
+from test_queue import TestQueue
 from model_id_state import ModelIdState
 
 
 class Model:
-    def __init__(self, duration=365, timeStep=1, susceptible=10000000, infected=50, removed=0, rateSI=0.05, rateIR=0.01):
+    def __init__(self, duration=100, timeStep=1,  # days
+                 susceptible=1000, infected=50, queued=0, removed=0,  # initial
+                 rateSI=0.1,  # per timeStep
+                 servers=5, serverMu=1, timeForTest=1,  # serverMu in days
+                 pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
+                 balking=None, reneging=None
+                 ):
         self.Duration = duration
         self.TimeStep = timeStep
+        self.NTimeSteps = int(duration/timeStep)
         self.InitialSusceptible = susceptible
         self.InitialInfected = infected
+        self.InitialQueued = queued
         self.InitialRemoved = removed
         self.RateSI = rateSI
-        self.RateIR = rateIR
+
+        self.Servers = servers/timeStep
+        self.ServerMu = serverMu/timeStep
+
+        self.PSymptomatic = pSymptomatic
+        self.TSymptomatic = tSymptomatic/timeStep
+        self.TRecovery = tRecovery/timeStep
+
         self.TotalIndividuals = susceptible + infected + removed
         self.Results = None
         self.HasModelRun = False
+
         self.People = [Person("S") for i in range(susceptible)] \
             + [Person("I") for i in range(infected)] \
+            + [Person("Q") for i in range(infected)] \
             + [Person("R") for i in range(removed)]
 
     def run(self):
         ts = list(range(0, self.Duration, self.TimeStep))
 
+        for person in self.People:
+            person.Advance(0)
         state = ModelIdState(self)
+        queue = TestQueue(self.Servers, self.ServerMu)
 
         results = {"Time": ts,
-                   "Susceptible": [len(state.SusceptibleIds)],
-                   "Infected": [len(state.InfectedIds)],
-                   "InfectedAndInfective": [len(state.InfectedAndInfectiveIds)],
-                   "InfectedAndSymptomatic": [len(state.InfectedAndSymtomsIds)],
-                   "Removed": [len(state.RemovedIds)]}
+                   "Susceptible": [len(state.SusceptibleIDs)],
+                   "Infected": [len(state.InfectedIDs)],
+                   "InfectedInfective": [len(state.InfectedInfectiveIDs)],
+                   "InfectedSymptomatic": [len(state.InfectedSymptomaticIDs)],
+                   "InfectedQueued": [len(state.InfectedQueuedIDs)],
+                   "InfectedIsolated": [len(state.InfectedIsolatedIDs)],
+                   "Removed": [len(state.RemovedIDs)]}
 
         for t in ts[1:]:
-            # Queue infected
-            # TODO: Implement
+            # Advance people
+            for person in self.People:
+                person.Advance(t)
+            state.UpdateState(self)
 
-            # Isolate positive tests
-            # TODO: Implement
-            # Isolate_Ids = [i for i in state.InfectedAndInfectiveIds
-            #                if self.People[i].TestResult.AvailableTime > t and self.People[i].TestResult.IsPositive == True]
-            # for i in Isolate_Ids:
-            #     self.People[i].SetStage("R")
-            # state.UpdateState(self, t)
-
-            # Infect and remove
-            S_to_I_count = int((self.RateSI * len(state.SusceptibleIds) * len(state.InfectedAndInfectiveIds)) /
-                               self.TotalIndividuals)
+            # Infect
+            # TODO: Not np.ceil, use np.round to closes int (including 0)
+            S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveIDs)) /
+                                        self.TotalIndividuals))
             if S_to_I_count > 0:
-                S_to_I_Ids = random.sample(state.SusceptibleIds, S_to_I_count)
+                S_to_I_Ids = random.sample(state.SusceptibleIDs, S_to_I_count)
                 for i in S_to_I_Ids:
-                    self.People[i].SetStage("I", t+4, t+7)
+                    self.People[i].Infect(t)
+            state.UpdateState(self)
 
-            I_to_R_count = int(len(state.InfectedIds) * self.RateIR)
-            if I_to_R_count > 0:
-                I_to_R_Ids = random.sample(state.InfectedIds, I_to_R_count)
-                for i in I_to_R_Ids:
-                    self.People[i].SetStage("R")
+            # Queue
+            for id, person in enumerate(self.People):
+                if person.ShouldQueue:
+                    person.Queue(t)
+                    queue.Put(id)
+            state.UpdateState(self)
 
-            state.UpdateState(self, t)
+            # Test
+            for id in queue.PopForTimeStep(self.TimeStep):
+                self.People[id].Test(t)
 
             self.__addResults(results, state)
 
         self.Results = pd.DataFrame.from_dict(results)
         self.HasModelRun = True
 
-    def plot(self, fileName='result.png', openFile=True):
-        if self.HasModelRun == False:
-            print('Error: Model has not run. Please call SIR.run()')
+    def __addResults(self, results, state):
+        results['Susceptible'].append(len(state.SusceptibleIDs))
+        results['Infected'].append(len(state.InfectedIDs))
+        results['InfectedInfective'].append(len(state.InfectedInfectiveIDs))
+        results['InfectedSymptomatic'].append(
+            len(state.InfectedSymptomaticIDs))
+        results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
+        results['InfectedIsolated'].append(len(state.InfectedIsolatedIDs))
+        results['Removed'].append(len(state.RemovedIDs))
+
+    def plot(self, fileName='result.png', openFile=True, title='Result'):
+        if not self.HasModelRun:
+            print('Error: Please call Model.run() before plotting.')
             return
+
+        plt.subplot(3, 1, 1)
         plt.plot(self.Results['Time'],
-                 self.Results['Susceptible'], color='blue')
+                 self.Results['InfectedQueued'], color='orange')
+        plt.legend(['Queued'],
+                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+        plt.ylabel('Queue')
+        plt.title(title)
+
+        plt.subplot(3, 1, 2)
+        plt.plot(self.Results['Time'],
+                 self.Results['Infected'], color='green')
+        plt.plot(self.Results['Time'],
+                 self.Results['InfectedInfective'], color='red')
+        plt.plot(self.Results['Time'],
+                 self.Results['InfectedSymptomatic'], color='orange')
+        plt.plot(self.Results['Time'],
+                 self.Results['InfectedQueued'], color='blue')
+        plt.plot(self.Results['Time'],
+                 self.Results['InfectedIsolated'], color='gray')
+        plt.ylabel('Infective')
+        plt.legend(['Total', 'Infective', 'Symptomatic', 'Queued', 'Isolated'],
+                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
+
+        plt.subplot(3, 1, 3)
+        # TODO: Stacking plot
+        plt.plot(self.Results['Time'],
+                 self.Results['Susceptible'], color='green')
         plt.plot(self.Results['Time'],
                  self.Results['Infected'], color='red')
         plt.plot(self.Results['Time'],
-                 self.Results['Removed'], color='green')
+                 self.Results['Removed'], color='gray')
+        plt.plot(self.Results['Time'],
+                 np.sum([self.Results['Susceptible'], self.Results['Infected'], self.Results['Removed']], axis=0), color='black')
         plt.xlabel('Time')
         plt.ylabel('Population')
-        plt.legend(['Susceptible', 'Infected', 'Removed'], prop={
-                   'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 1.02), ncol=3, fancybox=True, shadow=True)
-        # plt.title(r'$\beta = {0}, \gamma = {1}$'.format(
-        #     self.RateSI, self.RateIR))
+        plt.legend(['Susceptible', 'Infected', 'Removed', 'Total'],
+                   bbox_to_anchor=(1.1, 1), loc='right', ncol=1, fancybox=True, shadow=True)
         plt.savefig(fileName, dpi=300)
         plt.close()
         if openFile:
             os.startfile(fileName, 'open')
-
-    def __addResults(self, results, state):
-        results['Susceptible'].append(len(state.SusceptibleIds))
-        results['Infected'].append(len(state.InfectedIds))
-        results['InfectedAndInfective'].append(
-            len(state.InfectedAndInfectiveIds))
-        results['InfectedAndSymptomatic'].append(
-            len(state.InfectedAndSymtomsIds))
-        results['Removed'].append(len(state.RemovedIds))
-
-    def __advancePeople(self, t):
-        for person in self.People:
-            person.Advance(t)

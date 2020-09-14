@@ -1,16 +1,20 @@
 class ModelIdState:
 
     def __init__(self, model):
-        self.UpdateState(model, 0)
+        self.UpdateState(model)
 
-    def UpdateState(self, model, t):
-        self.SusceptibleIds = [i for (i, p) in enumerate(
-            model.People) if p.DeseaseStage.Stage == "S"]
-        self.InfectedIds = [i for (i, p) in enumerate(
-            model.People) if p.DeseaseStage.Stage == "I"]
-        self.InfectedAndInfectiveIds = [i for (i, p) in enumerate(
-            model.People) if p.DeseaseStage.Stage == "I" and p.DeseaseStage.InfectiveAt >= t]
-        self.InfectedAndSymtomsIds = [i for (i, p) in enumerate(
-            model.People) if p.DeseaseStage.Stage == "I" and p.DeseaseStage.SymptomaticAt >= t]
-        self.RemovedIds = [i for (i, p) in enumerate(
-            model.People) if p.DeseaseStage.Stage == "R"]
+    def UpdateState(self, model):
+        self.SusceptibleIDs = [i for (i, p) in
+                               enumerate(model.People) if p.Stage == "S"]
+        self.InfectedIDs = [i for (i, p) in
+                            enumerate(model.People) if p.Stage == "I"]
+        self.InfectedInfectiveIDs = [i for (i, p) in
+                                     enumerate(model.People) if p.Stage == "I" and p.IsInfective]
+        self.InfectedSymptomaticIDs = [i for (i, p) in
+                                       enumerate(model.People) if p.Stage == "I" and p.IsSymptomatic]
+        self.InfectedQueuedIDs = [i for (i, p) in
+                                  enumerate(model.People) if p.Stage == "I" and p.IsQueued]
+        self.InfectedIsolatedIDs = [i for (i, p) in
+                                    enumerate(model.People) if p.Stage == "I" and p.IsIsolated]
+        self.RemovedIDs = [i for (i, p) in
+                           enumerate(model.People) if p.Stage == "R"]
