@@ -112,6 +112,9 @@ class Model:
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
         # TODO: https://python-graph-gallery.com/251-stacked-area-chart-with-seaborn-style/
+        startTime = 0
+        endTime = max(self.Results['Time'])
+        self.Results['Time']
         if not self.HasModelRun:
             print('Error: Please call Model.run() before plotting.')
             return
@@ -126,9 +129,10 @@ class Model:
                       colors=['salmon', 'lightgreen'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
-        plt.ylabel('Queue')
+        plt.ylabel('Queued')
         plt.title(title)
         # Remove x-tick
+        plt.xlim(startTime, endTime)
         plt.tick_params(
             axis='x',
             which='both',
@@ -145,6 +149,7 @@ class Model:
         plt.ylabel('Infected')
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
+        plt.xlim(startTime, endTime)
         # Remove x-tick
         plt.tick_params(
             axis='x',
@@ -157,12 +162,14 @@ class Model:
         # TODO: Stacking plot
         plt.stackplot(self.Results['Time'],
                       [self.Results['Infected'], self.Results['Susceptible'],
-                       self.Results['Removed']], labels=['I', 'S', 'R'],
+                       self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
                       colors=['salmon', 'lightgreen', 'dimgray'])
         plt.xlabel('Time')
-        plt.ylabel('Population')
+        plt.ylabel('SIR')
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
+        plt.xlim(startTime, endTime)
+        plt.ylim(0, self.TotalIndividuals)
         plt.savefig(fileName, dpi=300)
         plt.close()
         if openFile:
