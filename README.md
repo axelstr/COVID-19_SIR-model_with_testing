@@ -27,7 +27,7 @@ model.plot('example_simulation.png')
 
 Generates 
 
-![example_simulation](example_simulation.png)
+![example_simulation](images/example_simulation.png)
 
 ### Analysis example
 
@@ -52,4 +52,4 @@ model3.run()
 # /.../
 ```
 
- ![example_analysis](example_analysis.png)
+ ![example_analysis](images/example_analysis.png)

@@ -19,7 +19,7 @@ model3 = Model(servers=3)
 model3.run()
 
 # ------- Plot -------
-fileName = 'example_analysis.png'
+fileName = 'images\\example_analysis.png'
 plt.subplot(3, 1, 1)
 plt.stackplot(model1.Results['Time'],
               [model1.Results['Infected'], model1.Results['Susceptible'],
