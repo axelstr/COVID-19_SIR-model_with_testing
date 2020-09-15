@@ -66,7 +66,6 @@ class Person:
         self.IsSymptomatic = None
 
     def Test(self, t):
-        # TODO: Delay with time to get result
         if self.Stage == "I":
             if self.TTestResult == 0:
                 self.IsQueued = False

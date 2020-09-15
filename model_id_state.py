@@ -10,6 +10,7 @@ class ModelIdState:
                             enumerate(people) if p.Stage == "I"]
         self.RemovedIDs = [i for (i, p) in
                            enumerate(people) if p.Stage == "R"]
+
         self.InfectedInfectiveIDs = [i for (i, p) in
                                      enumerate(people) if p.Stage == "I" and p.IsInfective]
         self.InfectedAsymptomaticIDs = [i for (i, p) in
@@ -18,10 +19,13 @@ class ModelIdState:
                                                  enumerate(people) if p.Stage == "I" and p.IsSymptomatic and (not p.IsIsolated)]
         self.InfectedSymptomaticIDs = [i for (i, p) in
                                        enumerate(people) if p.Stage == "I" and p.IsSymptomatic]
-        self.QueuedIDs = [i for (i, p) in
-                          enumerate(people) if p.Stage == "I" and p.IsQueued]
         self.InfectedIsolatedIDs = [i for (i, p) in
                                     enumerate(people) if p.Stage == "I" and p.IsIsolated]
+        self.InfectedInfectiveUnisolatedIDs = [i for (i, p) in
+                                               enumerate(people) if p.Stage == "I" and p.IsInfective and (not p.IsIsolated)]
+
+        self.QueuedIDs = [i for (i, p) in
+                          enumerate(people) if p.Stage == "I" and p.IsQueued]
         self.ExpectedWaitingTime = queue.GetExpectedWaitingTime()
 
     def Control(self):

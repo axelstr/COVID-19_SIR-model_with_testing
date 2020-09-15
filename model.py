@@ -21,7 +21,7 @@ class Model:
     def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.1,  # per timeStep
-                 servers=5, serverMu=1, tTestResult=1,  # serverMu in days
+                 servers=5, serverMu=1, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  seed=None  # Specify for consistent result
                  ):
@@ -38,6 +38,7 @@ class Model:
         self.Servers = servers
         self.ServerMu = serverMu
         self.TTestResult = tTestResult
+        self.QueuePrioritization = queuePrioritization
 
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
@@ -63,7 +64,8 @@ class Model:
 
         for person in self.People:
             person.Advance(0)
-        queue = TestQueue(self.Servers, self.ServerMu)
+        queue = TestQueue(self.Servers, self.ServerMu,
+                          self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
 
         results = {"Time": ts,
@@ -73,6 +75,7 @@ class Model:
                    "InfectedAsymptomatic": [],
                    "InfectedSymptomaticUnisolated": [],
                    "InfectedIsolated": [],
+                   "InfectedInfectiveUnisolated": [],
                    "Queued": [],
                    "ExpectedWaitingTime": []}
         self.__addResults(results, state)
@@ -84,7 +87,7 @@ class Model:
             state.UpdateState(self.People, queue)
 
             # Infect
-            S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveIDs)) /
+            S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveUnisolatedIDs)) /
                                         self.TotalIndividuals))
             if S_to_I_count > 0:
                 S_to_I_Ids = random.sample(state.SusceptibleIDs, S_to_I_count)
@@ -119,6 +122,8 @@ class Model:
         results['InfectedSymptomaticUnisolated'].append(
             len(state.InfectedSymptomaticUnisolatedIDs))
         results['InfectedIsolated'].append(len(state.InfectedIsolatedIDs))
+        results['InfectedInfectiveUnisolated'].append(
+            len(state.InfectedInfectiveUnisolatedIDs))
 
         results['Queued'].append(len(state.QueuedIDs))
         results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
@@ -132,7 +137,6 @@ class Model:
 
         sns.set_theme(style="darkgrid")
 
-        # TODO: Plot expected wait time
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
                       [self.Results['ExpectedWaitingTime']],

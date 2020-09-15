@@ -5,9 +5,7 @@ from exp_randomizer import ExpRandomizer
 
 
 class TestQueue:
-    def __init__(self, servers, serverMu, prioritisation='FIFO'):
-        # TODO: Use queue for advanced cases
-        # self.Queue = queue.Queue()
+    def __init__(self, servers, serverMu, prioritisation):
         self.ExpRandomizer = ExpRandomizer()
         self.Prioritisation = prioritisation
 
@@ -15,16 +13,17 @@ class TestQueue:
         self.Servers = servers
         self.ServerMu = serverMu
 
-        # TODO: Implement length and queue time getters
-
     def Put(self, id):
         self.Queue.append(id)
 
     def Pop(self):
         if self.Prioritisation == 'FIFO':
             return self.Queue.pop(0)
-        if self.Prioritisation == 'LIFO':
+        elif self.Prioritisation == 'LIFO':
             return self.Queue.pop()
+        else:
+            raise Exception(
+                f"Prioritization [{self.Prioritisation}] is not valid.")
 
     def PopForOneDay(self):
         # TODO: Implement queue with ExpRandomizer
@@ -38,5 +37,7 @@ class TestQueue:
         return popped
 
     def GetExpectedWaitingTime(self):
-        # TODO: Correct?
         return len(self.Queue)/(self.Servers*self.ServerMu)
+
+    def GetQueueLength(self):
+        return len(self.Queue)
