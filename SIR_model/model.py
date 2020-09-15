@@ -12,9 +12,9 @@ import os
 import sys
 import subprocess
 
-from person import Person
-from test_queue import TestQueue
-from model_id_state import ModelIdState
+from .person import Person
+from .test_queue import TestQueue
+from .model_id_state import ModelIdState
 
 
 class Model:
@@ -23,8 +23,8 @@ class Model:
 
     def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
-                 rateSI=0.1,  # per timeStep
-                 servers=5, serverMu=1, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
+                 rateSI=0.2,  # per timeStep
+                 servers=5, serverMu=4, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  seed=None  # Specify for consistent result
                  ):

@@ -1,7 +1,7 @@
 import queue
 import numpy as np
 
-from exp_randomizer import ExpRandomizer
+from .exp_randomizer import ExpRandomizer
 
 
 class TestQueue:

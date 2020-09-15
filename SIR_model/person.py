@@ -1,4 +1,4 @@
-from poisson_randomizer import PoissonRandomizer
+from .poisson_randomizer import PoissonRandomizer
 import numpy as np
 
 
