@@ -21,7 +21,7 @@ class Model:
     def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.1,  # per timeStep
-                 servers=5, serverMu=1, timeForTest=1,  # serverMu in days
+                 servers=5, serverMu=1, tTestResult=1,  # serverMu in days
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  seed=None  # Specify for consistent result
                  ):
@@ -37,6 +37,7 @@ class Model:
 
         self.Servers = servers
         self.ServerMu = serverMu
+        self.TTestResult = tTestResult
 
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
@@ -48,13 +49,13 @@ class Model:
         if seed != None:
             np.random.seed(seed)
 
-        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery)
+        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
                        for i in range(susceptible)] \
-            + [Person("I", pSymptomatic, tSymptomatic, tRecovery)
+            + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
                for i in range(infected)] \
-            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery)
+            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
                for i in range(infected)] \
-            + [Person("R", pSymptomatic, tSymptomatic, tRecovery)
+            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
                for i in range(removed)]
 
     def run(self):
@@ -142,6 +143,7 @@ class Model:
         plt.ylabel('days')
         plt.title(title)
         plt.xlim(startTime, endTime)
+        plt.ylim(0)
         plt.tick_params(
             axis='x',
             which='both',
