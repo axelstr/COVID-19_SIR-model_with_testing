@@ -1,4 +1,4 @@
-from model import Model
+from SIR_model import Model
 
 model = Model()
 model.run()
