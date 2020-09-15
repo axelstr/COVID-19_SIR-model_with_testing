@@ -24,7 +24,8 @@ class Model:
     def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.2,  # per timeStep
-                 servers=2, serverMu=4, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
+                 servers=1, serverMu=1/8,  # serverMu: day/person
+                 tTestResult=1, queuePrioritization='FIFO',
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  seed=None  # Specify for consistent result
                  ):

@@ -39,7 +39,7 @@ class TestQueue:
         """
         # TODO: Implement queue with ExpRandomizer
         nItems = len(self.Queue)
-        nItemsToPop = int(np.round(self.Servers*self.ServerMu))
+        nItemsToPop = int(np.round(self.Servers/self.ServerMu))
         popped = []
 
         for _ in range(min(nItems, nItemsToPop)):
@@ -50,7 +50,10 @@ class TestQueue:
     def GetExpectedWaitingTime(self):
         """The current, expected waiting time for the last person in the queue.
         """
-        return len(self.Queue)/(self.Servers*self.ServerMu)
+        queued = max(len(self.Queue)-self.Servers, 0)
+        waitingTimeUntilServed = queued*self.ServerMu/self.Servers
+
+        return waitingTimeUntilServed + self.ServerMu
 
     def GetQueueLength(self):
         """The current number of people queued.
