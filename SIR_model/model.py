@@ -21,12 +21,13 @@ class Model:
     """SIR-model with M|M|s testing queue.
     """
 
-    def __init__(self, duration=100,  # days
+    def __init__(self, duration=150,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
-                 rateSI=0.2,  # per timeStep
-                 servers=2, serverMu=4, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
+                 rateSI=0.1,  # per timeStep
+                 servers=1, serverMu=8, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
-                 seed=None  # Specify for consistent result
+                 pFalseSymptoms=0.01,  # For S or R, daily
+                 seed=None  # Specify with int for consistent result
                  ):
         """Runs automatically when a model object is created.
         """
@@ -48,6 +49,7 @@ class Model:
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
         self.TRecovery = tRecovery
+        self.PFalseSymptoms = pFalseSymptoms
 
         self.Results = None
         self.HasModelRun = False
@@ -83,7 +85,8 @@ class Model:
                    "InfectedSymptomaticUnisolated": [],
                    "InfectedIsolated": [],
                    "InfectedInfectiveUnisolated": [],
-                   "Queued": [],
+                   "InfectedQueued": [],
+                   "UninfectedQueued": [],
                    "ExpectedWaitingTime": []}
         self.__addResults(results, state)
 
@@ -102,16 +105,26 @@ class Model:
                     self.People[i].Infect(t)
             state.UpdateState(self.People, queue)
 
+            # False symptoms
+            S_to_FalseSymptoms = int(
+                np.round(len(state.SusceptibleNotQueuedIDs)*self.PFalseSymptoms))
+            if S_to_FalseSymptoms > 0:
+                S_to_FalseSymptoms_Ids = random.sample(
+                    state.SusceptibleNotQueuedIDs, S_to_FalseSymptoms)
+                for i in S_to_FalseSymptoms_Ids:
+                    self.People[i].FalseSymptomsInfect(t)
+            state.UpdateState(self.People, queue)
+
             # Queue
-            for id, person in enumerate(self.People):
+            for i, person in enumerate(self.People):
                 if person.ShouldQueue:
                     person.Queue(t)
-                    queue.Put(id)
+                    queue.Put(i)
             state.UpdateState(self.People, queue)
 
             # Test
-            for id in queue.PopForOneDay():
-                self.People[id].Test(t)
+            for i in queue.PopForOneDay():
+                self.People[i].Test(t)
             state.UpdateState(self.People, queue)
 
             self.__addResults(results, state)
@@ -134,7 +147,8 @@ class Model:
         results['InfectedInfectiveUnisolated'].append(
             len(state.InfectedInfectiveUnisolatedIDs))
 
-        results['Queued'].append(len(state.QueuedIDs))
+        results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
+        results['UninfectedQueued'].append(len(state.UninfectedQueuedIDs))
         results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
 
     def plot(self, fileName='result.png', openFile=True, title='SIR-model with M|M|s testing queue'):
@@ -155,6 +169,73 @@ class Model:
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.ylabel('days')
+        plt.title(title)
+        plt.xlim(startTime, endTime)
+        plt.ylim(0)
+        plt.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
+
+        plt.subplot(3, 1, 2)
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['InfectedAsymptomatic'],
+                       self.Results['InfectedSymptomaticUnisolated'],
+                       self.Results['InfectedIsolated']],
+                      labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
+                      colors=['rosybrown', 'salmon', 'dimgray'])
+        plt.ylabel('infected')
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
+        plt.xlim(startTime, endTime)
+        plt.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
+
+        plt.subplot(3, 1, 3)
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['Infected'], self.Results['Susceptible'],
+                       self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
+                      colors=['salmon', 'lightgreen', 'dimgray'])
+        plt.xlabel('days')
+        plt.ylabel('population')
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
+        plt.xlim(startTime, endTime)
+        plt.ylim(0, self.TotalIndividuals)
+        plt.savefig(fileName, dpi=300)
+        plt.close()
+        if openFile:
+            if sys.platform == "win32":
+                os.startfile(fileName, 'open')
+            else:
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.call([opener, fileName])
+
+    def queuePlot(self, fileName='result_queue.png', openFile=True, title='Queue distribution'):
+        """Plot of the queue distribution.
+        """
+        startTime = 0
+        endTime = max(self.Results['Time'])
+        if not self.HasModelRun:
+            raise Exception('Call Model.run() before plotting.')
+
+        sns.set_theme(style="darkgrid")
+
+        plt.subplot(3, 1, 1)
+        plt.stackplot(self.Results['Time'],
+                      [self.Results['InfectedQueued'],
+                       self.Results['UninfectedQueued']],
+                      labels=['Infected', 'Uninfected'],
+                      colors=['salmon', 'lightgreen'])
+        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
+        plt.ylabel('queued')
         plt.title(title)
         plt.xlim(startTime, endTime)
         plt.ylim(0)
