@@ -1,29 +1,35 @@
 import queue
 import numpy as np
 
+from exp_randomizer import ExpRandomizer
+
 
 class TestQueue:
-    def __init__(self, servers, serverMu):
+    def __init__(self, servers, serverMu, prioritisation='FIFO'):
         # TODO: Use queue for advanced cases
         # self.Queue = queue.Queue()
+        self.ExpRandomizer = ExpRandomizer()
+        self.Prioritisation = prioritisation
 
         self.Queue = []
         self.Servers = servers
         self.ServerMu = serverMu
 
-        # TODO: Implement length and queue time
+        # TODO: Implement length and queue time getters
 
     def Put(self, id):
         self.Queue.append(id)
 
     def Pop(self):
-        return self.Queue.pop(0)
+        if self.Prioritisation == 'FIFO':
+            return self.Queue.pop(0)
+        if self.Prioritisation == 'LIFO':
+            return self.Queue.pop()
 
-    def PopForTimeStep(self, dt):
-        # TODO: Calc timestep in relation to serverMu
+    def PopForOneDay(self):
+        # TODO: Implement queue with ExpRandomizer
         nItems = len(self.Queue)
-        # TODO: Randomize
-        nItemsToPop = int(np.round(self.Servers*self.ServerMu*dt))
+        nItemsToPop = int(np.round(self.Servers*self.ServerMu))
         popped = []
 
         for _ in range(min(nItems, nItemsToPop)):

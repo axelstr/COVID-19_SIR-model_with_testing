@@ -15,32 +15,35 @@ from model_id_state import ModelIdState
 
 
 class Model:
-    def __init__(self, duration=100, timeStep=1,  # days
+    def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.1,  # per timeStep
                  servers=5, serverMu=1, timeForTest=1,  # serverMu in days
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
-                 balking=None, reneging=None
+                 seed=None  # Specify for consistent result
                  ):
-        self.Duration = duration
-        self.TimeStep = timeStep
-        self.NTimeSteps = int(duration/timeStep)
+        self.Duration = int(duration)
+        self.NTimeSteps = int(duration+1)
+
         self.InitialSusceptible = susceptible
         self.InitialInfected = infected
         self.InitialQueued = queued
         self.InitialRemoved = removed
+        self.TotalIndividuals = susceptible + infected + removed
         self.RateSI = rateSI
 
-        self.Servers = servers/timeStep
-        self.ServerMu = serverMu/timeStep
+        self.Servers = servers
+        self.ServerMu = serverMu
 
         self.PSymptomatic = pSymptomatic
-        self.TSymptomatic = tSymptomatic/timeStep
-        self.TRecovery = tRecovery/timeStep
+        self.TSymptomatic = tSymptomatic
+        self.TRecovery = tRecovery
 
-        self.TotalIndividuals = susceptible + infected + removed
         self.Results = None
         self.HasModelRun = False
+
+        if seed != None:
+            np.random.seed(seed)
 
         self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery)
                        for i in range(susceptible)] \
@@ -52,7 +55,7 @@ class Model:
                for i in range(removed)]
 
     def run(self):
-        ts = list(range(0, self.Duration, self.TimeStep))
+        ts = np.linspace(0, self.Duration, self.NTimeSteps)
 
         for person in self.People:
             person.Advance(0)
@@ -91,7 +94,7 @@ class Model:
             state.UpdateState(self)
 
             # Test
-            for id in queue.PopForTimeStep(self.TimeStep):
+            for id in queue.PopForOneDay():
                 self.People[id].Test(t)
 
             self.__addResults(results, state)
@@ -118,11 +121,11 @@ class Model:
 
         sns.set_theme(style="darkgrid")
 
+        # TODO: Plot expected wait time
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedQueued'],
-                       self.Results['InfectedQueued']],
-                      labels=['Infected', 'Susceptible (dummy data)'],
+                      [self.Results['InfectedQueued']],
+                      labels=['Infected'],
                       colors=['salmon', 'lightgreen'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)

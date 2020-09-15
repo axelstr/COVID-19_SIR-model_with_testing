@@ -1,4 +1,5 @@
 from poisson_randomizer import PoissonRandomizer
+import numpy as np
 
 
 class Person:
@@ -25,8 +26,9 @@ class Person:
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
-            if (not self.IsSymptomatic) and t >= self.SymptomaticAt:
+            if self.WillShowSymptomps and (not self.IsSymptomatic) and t >= self.SymptomaticAt:
                 self.IsSymptomatic = True
+                self.WillShowSymptomps = None
                 if (not self.ShouldQueue):
                     (self.ShouldQueue) = True
             if t >= self.RecoverAt:
@@ -35,11 +37,12 @@ class Person:
     def Infect(self, t):
         self.Stage = "I"
         self.InfectiveAt = t+0
-        self.SymptomaticAt = t + \
-            self.PoissonRandomizer.fromMean(self.TSymptomatic)
         self.RecoverAt = t+self.PoissonRandomizer.fromMean(self.TRecovery)
-        # TODO: Randomize, some never gets symptomatic
-        # TODO: Relate mean T to timestep
+
+        self.WillShowSymptomps = np.random.rand() <= self.PSymptomatic
+        if self.WillShowSymptomps:
+            self.SymptomaticAt = t + \
+                self.PoissonRandomizer.fromMean(self.TSymptomatic)
 
     def Queue(self, t):
         self.ShouldQueue = False
@@ -48,21 +51,14 @@ class Person:
 
     def Recover(self, t):
         self.Stage = "R"
-        self.IsInfective = False
-        self.IsSymptomatic = False
-        self.IsQueued = False
-        self.IsIsolated = False
+        self.IsInfective = None
+        self.IsSymptomatic = None
+        self.IsQueued = None
+        self.IsIsolated = None
 
     def Test(self, t):
-        if self.Stage == "S":
-            # TODO: Implement
-            pass
-
         if self.Stage == "I":
             # TODO: Delay with time to get result
             self.IsInfective = False  # Can't infect since isolated
             self.IsQueued = False
             self.IsIsolated = True
-        if self.Stage == "R":
-            # TODO: Implement
-            pass
