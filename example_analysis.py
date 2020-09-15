@@ -15,7 +15,7 @@ model1.run()
 model2 = Model(servers=2)
 model2.run()
 
-model3 = Model(servers=10)
+model3 = Model(servers=3)
 model3.run()
 
 # ------- Plot -------
@@ -36,7 +36,7 @@ plt.tick_params(
     labelbottom=False)
 plt.xlim(min(model1.Results['Time']), max(model1.Results['Time']))
 plt.ylim(0, model1.TotalIndividuals)
-plt.title('Server analysis')
+plt.title('Queue Analysis')
 
 plt.subplot(3, 1, 2)
 plt.stackplot(model2.Results['Time'],
@@ -58,7 +58,7 @@ plt.stackplot(model3.Results['Time'],
               [model3.Results['Infected'], model3.Results['Susceptible'],
                model3.Results['Removed']],
               colors=['salmon', 'lightgreen', 'dimgray'])
-plt.ylabel('4 servers')
+plt.ylabel('3 servers')
 plt.xlabel('days')
 plt.xlim(min(model3.Results['Time']), max(model3.Results['Time']))
 plt.ylim(0, model3.TotalIndividuals)

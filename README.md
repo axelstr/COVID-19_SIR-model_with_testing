@@ -1,15 +1,15 @@
-# COVID-19: SIR-model with M|M|s testing-queue
+# COVID-19: SIR-model with testing
 This model strives to simulate the COVID-19 pandemic with testing implemented as a M|M|s-queue.
 
 ## Installation
 
 1. [Install Python 3](https://www.python.org/downloads/) 
 2. Install dependencies
-   - `pip install numpy`
-   - `pip install pandas`
-   - `pip install matplotblib`
-   - `pip install seaborn`
-3. Clone or download this repo to your local machine
+   - `numpy`
+   - `pandas`
+   - `matplotblib`
+   - `seaborn`
+3. Clone or download this repo
 
 ## Usage
 
@@ -18,11 +18,11 @@ This model strives to simulate the COVID-19 pandemic with testing implemented as
 ##### `example_simulation.py`:
 
 ```python
-from model import Model
+from SIR_model import Model
 
-model = Model(duration=365, servers=0)
+model = Model()
 model.run()
-model.plot()
+model.plot('example_simulation.png')
 ```
 
 Generates 
@@ -34,24 +34,22 @@ Generates
 ##### `example_analysis.py`:
 
 ```python
-from model import Model
-import matplotlib.pyplot as plt
-import os
+# ------- Import -------
+from SIR_model import Model
+/.../
 
-model1 = Model(rateSI=0.01)
+# ------- Simulate -------
+model1 = Model(servers=1)
 model1.run()
 
-model2 = Model(rateSI=0.05)
+model2 = Model(servers=2)
 model2.run()
 
-model3 = Model(rateSI=.1)
+model3 = Model(servers=3)
 model3.run()
 
-t = model1.Results['Time']
-plt.plot(t, model1.Results['Infected'])
-plt.plot(t, model2.Results['Infected'])
-plt.plot(t, model3.Results['Infected'])
-plt.savefig('example_analysis.png', dpi=300)
+# ------- Plot -------
+# /.../
 ```
 
  ![example_analysis](example_analysis.png)
