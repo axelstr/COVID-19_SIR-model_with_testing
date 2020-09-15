@@ -1,4 +1,6 @@
 class ModelIdState:
+    """Object that tracks the current state of the list of people.
+    """
 
     def __init__(self, people, queue):
         self.UpdateState(people, queue)

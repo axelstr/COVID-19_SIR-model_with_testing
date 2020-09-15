@@ -18,6 +18,9 @@ from model_id_state import ModelIdState
 
 
 class Model:
+    """SIR-model with M|M|s testing queue.
+    """
+
     def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.1,  # per timeStep
@@ -25,6 +28,8 @@ class Model:
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  seed=None  # Specify for consistent result
                  ):
+        """Runs automatically when a model object is created.
+        """
         self.Duration = int(duration)
         self.NTimeSteps = int(duration+1)
 
@@ -60,6 +65,8 @@ class Model:
                for i in range(removed)]
 
     def run(self):
+        """Executes the simulation.
+        """
         ts = np.linspace(0, self.Duration, self.NTimeSteps)
 
         for person in self.People:
@@ -113,6 +120,8 @@ class Model:
         self.HasModelRun = True
 
     def __addResults(self, results, state):
+        """Iterates over the current state and sets appends a value to the corresponding result array.
+        """
         results['Susceptible'].append(len(state.SusceptibleIDs))
         results['Infected'].append(len(state.InfectedIDs))
         results['Removed'].append(len(state.RemovedIDs))
@@ -129,11 +138,12 @@ class Model:
         results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
+        """Default plot of the result.
+        """
         startTime = 0
         endTime = max(self.Results['Time'])
         if not self.HasModelRun:
-            print('Error: Please call Model.run() before plotting.')
-            return
+            raise Exception('Call Model.run() before plotting.')
 
         sns.set_theme(style="darkgrid")
 

@@ -25,6 +25,8 @@ class Person:
         self.IsIsolated = False
 
     def Advance(self, t):
+        """Advances the person to the current timestep.
+        """
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
@@ -41,6 +43,8 @@ class Person:
                 self.Recover(t)
 
     def Infect(self, t):
+        """Infects a person with covid-19.
+        """
         self.Stage = "I"
         self.InfectiveAt = t+0
         self.RecoverAt = t+self.PoissonRandomizer.fromMean(self.TRecovery)
@@ -51,11 +55,15 @@ class Person:
                 self.PoissonRandomizer.fromMean(self.TSymptomatic)
 
     def Queue(self, t):
+        """Tells a person object that it is queued.
+        """
         self.ShouldQueue = False
         self.IsQueued = True
         self.QueuedAt = t
 
     def Recover(self, t):
+        """Recovers a person from covid-19.
+        """
         self.Stage = "R"
         self.IsInfective = None
         self.IsSymptomatic = None
@@ -66,6 +74,8 @@ class Person:
         self.IsSymptomatic = None
 
     def Test(self, t):
+        """Tests a person for covid-19. Schedules isolation when result is available.
+        """
         if self.Stage == "I":
             if self.TTestResult == 0:
                 self.IsQueued = False
