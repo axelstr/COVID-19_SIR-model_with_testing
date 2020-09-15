@@ -57,8 +57,7 @@ class Person:
         self.IsIsolated = None
 
     def Test(self, t):
+        # TODO: Delay with time to get result
         if self.Stage == "I":
-            # TODO: Delay with time to get result
-            self.IsInfective = False  # Can't infect since isolated
             self.IsQueued = False
             self.IsIsolated = True

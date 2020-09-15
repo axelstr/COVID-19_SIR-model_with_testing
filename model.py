@@ -5,9 +5,12 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import random
-import os
 import seaborn as sns
+import random
+
+import os
+import sys
+import subprocess
 
 from person import Person
 from test_queue import TestQueue
@@ -59,23 +62,25 @@ class Model:
 
         for person in self.People:
             person.Advance(0)
-        state = ModelIdState(self)
         queue = TestQueue(self.Servers, self.ServerMu)
+        state = ModelIdState(self.People, queue)
 
         results = {"Time": ts,
-                   "Susceptible": [len(state.SusceptibleIDs)],
-                   "Infected": [len(state.InfectedIDs)],
-                   "InfectedInfective": [len(state.InfectedInfectiveIDs)],
-                   "InfectedSymptomatic": [len(state.InfectedSymptomaticIDs)],
-                   "InfectedQueued": [len(state.InfectedQueuedIDs)],
-                   "InfectedIsolated": [len(state.InfectedIsolatedIDs)],
-                   "Removed": [len(state.RemovedIDs)]}
+                   "Susceptible": [],
+                   "Infected": [],
+                   "Removed": [],
+                   "InfectedAsymptomatic": [],
+                   "InfectedSymptomaticUnisolated": [],
+                   "InfectedIsolated": [],
+                   "Queued": [],
+                   "ExpectedWaitingTime": []}
+        self.__addResults(results, state)
 
         for t in ts[1:]:
             # Advance people
             for person in self.People:
                 person.Advance(t)
-            state.UpdateState(self)
+            state.UpdateState(self.People, queue)
 
             # Infect
             S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveIDs)) /
@@ -84,18 +89,19 @@ class Model:
                 S_to_I_Ids = random.sample(state.SusceptibleIDs, S_to_I_count)
                 for i in S_to_I_Ids:
                     self.People[i].Infect(t)
-            state.UpdateState(self)
+            state.UpdateState(self.People, queue)
 
             # Queue
             for id, person in enumerate(self.People):
                 if person.ShouldQueue:
                     person.Queue(t)
                     queue.Put(id)
-            state.UpdateState(self)
+            state.UpdateState(self.People, queue)
 
             # Test
             for id in queue.PopForOneDay():
                 self.People[id].Test(t)
+            state.UpdateState(self.People, queue)
 
             self.__addResults(results, state)
 
@@ -105,12 +111,16 @@ class Model:
     def __addResults(self, results, state):
         results['Susceptible'].append(len(state.SusceptibleIDs))
         results['Infected'].append(len(state.InfectedIDs))
-        results['InfectedInfective'].append(len(state.InfectedInfectiveIDs))
-        results['InfectedSymptomatic'].append(
-            len(state.InfectedSymptomaticIDs))
-        results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
-        results['InfectedIsolated'].append(len(state.InfectedIsolatedIDs))
         results['Removed'].append(len(state.RemovedIDs))
+
+        results['InfectedAsymptomatic'].append(
+            len(state.InfectedAsymptomaticIDs))
+        results['InfectedSymptomaticUnisolated'].append(
+            len(state.InfectedSymptomaticUnisolatedIDs))
+        results['InfectedIsolated'].append(len(state.InfectedIsolatedIDs))
+
+        results['Queued'].append(len(state.QueuedIDs))
+        results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
 
     def plot(self, fileName='result.png', openFile=True, title='Result'):
         startTime = 0
@@ -124,12 +134,12 @@ class Model:
         # TODO: Plot expected wait time
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedQueued']],
-                      labels=['Infected'],
-                      colors=['salmon', 'lightgreen'])
+                      [self.Results['ExpectedWaitingTime']],
+                      labels=['Queue Length'],
+                      colors=['khaki'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
-        plt.ylabel('Queued')
+        plt.ylabel('days')
         plt.title(title)
         plt.xlim(startTime, endTime)
         plt.tick_params(
@@ -141,11 +151,12 @@ class Model:
 
         plt.subplot(3, 1, 2)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedInfective'],
+                      [self.Results['InfectedAsymptomatic'],
+                       self.Results['InfectedSymptomaticUnisolated'],
                        self.Results['InfectedIsolated']],
-                      labels=['Infective', 'Isolated'],
-                      colors=['salmon', 'dimgray'])
-        plt.ylabel('Infected')
+                      labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
+                      colors=['rosybrown', 'salmon', 'dimgray'])
+        plt.ylabel('infected')
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
@@ -161,8 +172,8 @@ class Model:
                       [self.Results['Infected'], self.Results['Susceptible'],
                        self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
                       colors=['salmon', 'lightgreen', 'dimgray'])
-        plt.xlabel('Time')
-        plt.ylabel('SIR')
+        plt.xlabel('days')
+        plt.ylabel('population')
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
@@ -170,4 +181,8 @@ class Model:
         plt.savefig(fileName, dpi=300)
         plt.close()
         if openFile:
-            os.startfile(fileName, 'open')
+            if sys.platform == "win32":
+                os.startfile(fileName, 'open')
+            else:
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.call([opener, fileName])

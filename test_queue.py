@@ -36,3 +36,7 @@ class TestQueue:
             popped.append(self.Pop())
 
         return popped
+
+    def GetExpectedWaitingTime(self):
+        # TODO: Correct?
+        return len(self.Queue)/(self.Servers*self.ServerMu)
