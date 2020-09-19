@@ -38,7 +38,7 @@ class TestQueue:
         """
         # TODO: Implement queue with ExpRandomizer
         nItems = len(self.Queue)
-        nItemsToPop = int(np.round(self.Servers*self.ServerMu))
+        nItemsToPop = int(np.round(self.Servers/self.ServerMu))
         popped = []
 
         for _ in range(min(nItems, nItemsToPop)):
@@ -51,7 +51,11 @@ class TestQueue:
         """
         if self.Servers == 0:
             return np.NaN
-        return len(self.Queue)/(self.Servers*self.ServerMu)
+
+        queued = max(len(self.Queue)-self.Servers, 0)
+        waitingTimeUntilServed = queued*self.ServerMu/self.Servers
+
+        return waitingTimeUntilServed + self.ServerMu
 
     def GetQueueLength(self):
         """The current number of people queued.

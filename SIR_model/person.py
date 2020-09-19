@@ -44,9 +44,7 @@ class Person:
                 self.WillBeSymptomatic = False
                 self.ShouldQueue = True
             if self.WillIsolate and (t >= self.IsolateAt):
-                self.IsIsolated = True
-                self.WillIsolate = False
-                self.IsolateAt = None
+                self.Isolate(t)
             if t >= self.RecoverAt:
                 self.Recover(t)
 
@@ -77,23 +75,6 @@ class Person:
         self.IsQueued = True
         self.QueuedAt = t
 
-    def Recover(self, t):
-        """Recovers a person from covid-19.
-        """
-        self.Stage = "R"
-        self.IsInfective = None
-        self.IsSymptomatic = None
-        self.WillIsolate = None
-        # self.IsQueued = None
-        self.IsIsolated = None
-        self.IsInfective = None
-        self.IsSymptomatic = None
-
-    def FalseRecover(self, t):
-        """Recovers a person from false symptomps.
-        """
-        self.IsFalseSymptomatic = False
-
     def Test(self, t):
         """Tests a person for covid-19. Schedules isolation when result is available.
         """
@@ -113,3 +94,25 @@ class Person:
 
         if self.Stage == "R":
             self.IsQueued = False
+
+    def Isolate(self, t):
+        self.IsIsolated = True
+        self.WillIsolate = False
+        self.IsolateAt = None
+
+    def Recover(self, t):
+        """Recovers a person from covid-19.
+        """
+        self.Stage = "R"
+        self.IsInfective = None
+        self.IsSymptomatic = None
+        self.WillIsolate = None
+        # self.IsQueued = None
+        self.IsIsolated = None
+        self.IsInfective = None
+        self.IsSymptomatic = None
+
+    def FalseRecover(self, t):
+        """Recovers a person from false symptomps.
+        """
+        self.IsFalseSymptomatic = False
