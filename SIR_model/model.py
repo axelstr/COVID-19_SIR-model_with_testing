@@ -27,7 +27,7 @@ class Model:
                  rateSI=0.1,  # per timeStep
                  servers=1, serverMu=8, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
-                 pFalseSymptoms=0.01,  # For S or R, daily
+                 pFalseSymptoms=0.01, tFalseRecovery=7,  # For S
                  seed=None  # Specify with int for consistent result
                  ):
         """Runs automatically when a model object is created.
@@ -51,6 +51,7 @@ class Model:
         self.TSymptomatic = tSymptomatic
         self.TRecovery = tRecovery
         self.PFalseSymptoms = pFalseSymptoms
+        self.TFalseRecovery = tFalseRecovery
 
         self.Results = None
         self.HasModelRun = False
@@ -58,13 +59,13 @@ class Model:
         if seed != None:
             np.random.seed(seed)
 
-        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
+        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
                        for i in range(susceptible)] \
-            + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
+            + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
                for i in range(infected)] \
-            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
+            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
                for i in range(infected)] \
-            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tTestResult)
+            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
                for i in range(removed)]
 
     def run(self):
@@ -130,8 +131,8 @@ class Model:
         results['Infected'].append(len(state.InfectedIDs))
         results['Removed'].append(len(state.RemovedIDs))
 
-        results['InfectedAsymptomatic'].append(
-            len(state.InfectedAsymptomaticIDs))
+        results['InfectedAsymptomaticUnisolated'].append(
+            len(state.InfectedAsymptomaticUnisolatedIDs))
         results['InfectedSymptomaticUnisolated'].append(
             len(state.InfectedSymptomaticUnisolatedIDs))
         results['InfectedIsolated'].append(len(state.InfectedIsolatedIDs))
@@ -174,7 +175,7 @@ class Model:
 
         plt.subplot(3, 1, 2)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedAsymptomatic'],
+                      [self.Results['InfectedAsymptomaticUnisolated'],
                        self.Results['InfectedSymptomaticUnisolated'],
                        self.Results['InfectedIsolated']],
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
@@ -242,7 +243,7 @@ class Model:
 
         plt.subplot(3, 1, 2)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedAsymptomatic'],
+                      [self.Results['InfectedAsymptomaticUnisolated'],
                        self.Results['InfectedSymptomaticUnisolated'],
                        self.Results['InfectedIsolated']],
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],

@@ -6,11 +6,12 @@ class Person:
     """Person object.
     """
 
-    def __init__(self, deseaseStage, pSymptomatic, tSymptomatic, tRecovery, tTestResult):
+    def __init__(self, deseaseStage, pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult):
         self.PoissonRandomizer = PoissonRandomizer()
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
         self.TRecovery = tRecovery
+        self.TFalseRecovery = tFalseRecovery
         self.TTestResult = tTestResult
 
         self.Stage = deseaseStage
@@ -25,10 +26,15 @@ class Person:
         self.WillIsolate = False
         self.IsIsolated = False
         self.HasTestedPositive = False
+        self.IsFalseSymptomatic = False
 
     def Advance(self, t):
         """Advances the person to the current timestep.
         """
+        if self.Stage == "S":
+            if self.IsFalseSymptomatic:
+                if t >= self.FalseRecoverAt:
+                    self.FalseRecover(t)
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
@@ -60,7 +66,9 @@ class Person:
         """Infects a person with false symtpoms (non-covid related illness).
         """
         self.ShouldQueue = True
-        self.IsSymptomatic = True
+        self.IsFalseSymptomatic = True
+        self.FalseRecoverAt = t + \
+            self.PoissonRandomizer.fromMean(self.TFalseRecovery)
 
     def Queue(self, t):
         """Tells a person object that it is queued.
@@ -80,6 +88,11 @@ class Person:
         self.IsIsolated = None
         self.IsInfective = None
         self.IsSymptomatic = None
+
+    def FalseRecover(self, t):
+        """Recovers a person from false symptomps.
+        """
+        self.IsFalseSymptomatic = False
 
     def Test(self, t):
         """Tests a person for covid-19. Schedules isolation when result is available.

@@ -20,8 +20,8 @@ class ModelIdState:
 
         self.InfectedInfectiveIDs = [i for (i, p) in
                                      enumerate(people) if p.Stage == "I" and p.IsInfective]
-        self.InfectedAsymptomaticIDs = [i for (i, p) in
-                                        enumerate(people) if p.Stage == "I" and (not p.IsSymptomatic)]
+        self.InfectedAsymptomaticUnisolatedIDs = [i for (i, p) in
+                                                  enumerate(people) if p.Stage == "I" and (not p.IsSymptomatic) and (not p.IsIsolated)]
         self.InfectedSymptomaticUnisolatedIDs = [i for (i, p) in
                                                  enumerate(people) if p.Stage == "I" and p.IsSymptomatic and (not p.IsIsolated)]
         self.InfectedSymptomaticIDs = [i for (i, p) in
@@ -47,7 +47,7 @@ class ModelIdState:
 
     def Control(self):
         totalInfected = len(self.InfectedIDs)
-        asymptomatic = len(self.InfectedAsymptomaticIDs)
+        asymptomatic = len(self.InfectedAsymptomaticUnisolatedIDs)
         symptomaticUnisolated = len(self.InfectedSymptomaticUnisolatedIDs)
         isolated = len(self.InfectedIsolatedIDs)
         s = asymptomatic + symptomaticUnisolated + isolated
