@@ -1,4 +1,3 @@
-import queue
 import numpy as np
 
 from .exp_randomizer import ExpRandomizer
@@ -50,6 +49,9 @@ class TestQueue:
     def GetExpectedWaitingTime(self):
         """The current, expected waiting time for the last person in the queue.
         """
+        if self.Servers == 0:
+            return np.NaN
+
         queued = max(len(self.Queue)-self.Servers, 0)
         waitingTimeUntilServed = queued*self.ServerMu/self.Servers
 
