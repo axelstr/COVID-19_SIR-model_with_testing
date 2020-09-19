@@ -34,10 +34,13 @@ class ModelIdState:
         self.CanShowFalseSymptomsIDs = [i for (i, p) in
                                         enumerate(people) if p.Stage != "I" and (not p.IsQueued) and (not p.HasTestedPositive)]
 
+        self.SusceptibleQueuedIDs = [i for (i, p) in
+                                     enumerate(people) if p.Stage == "S" and p.IsQueued]
         self.InfectedQueuedIDs = [i for (i, p) in
                                   enumerate(people) if p.Stage == "I" and p.IsQueued]
-        self.UninfectedQueuedIDs = [i for (i, p) in
-                                    enumerate(people) if p.Stage != "I" and p.IsQueued]
+        self.RemovedQueuedIDs = [i for (i, p) in
+                                 enumerate(people) if p.Stage == "R" and p.IsQueued]
+
         self.ExpectedWaitingTime = queue.GetExpectedWaitingTime()
 
         self.Control()

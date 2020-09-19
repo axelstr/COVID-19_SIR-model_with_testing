@@ -15,6 +15,7 @@ import subprocess
 from .person import Person
 from .test_queue import TestQueue
 from .model_id_state import ModelIdState
+from .result import Result
 
 
 class Model:
@@ -96,11 +97,11 @@ class Model:
             state.UpdateState(self.People, queue)
 
             # False symptoms
-            S_to_FalseSymptoms = int(
+            S_to_FalseSymptoms_count = int(
                 np.round(len(state.SusceptibleNotQueuedIDs)*self.PFalseSymptoms))
-            if S_to_FalseSymptoms > 0:
+            if S_to_FalseSymptoms_count > 0:
                 S_to_FalseSymptoms_Ids = random.sample(
-                    state.SusceptibleNotQueuedIDs, S_to_FalseSymptoms)
+                    state.SusceptibleNotQueuedIDs, S_to_FalseSymptoms_count)
                 for i in S_to_FalseSymptoms_Ids:
                     self.People[i].FalseSymptomsInfect(t)
             state.UpdateState(self.People, queue)
@@ -137,8 +138,10 @@ class Model:
         results['InfectedInfectiveUnisolated'].append(
             len(state.InfectedInfectiveUnisolatedIDs))
 
+        results['SusceptibleQueued'].append(len(state.SusceptibleQueuedIDs))
         results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
-        results['UninfectedQueued'].append(len(state.UninfectedQueuedIDs))
+        results['RemovedQueued'].append(len(state.RemovedQueuedIDs))
+
         results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
 
     def plot(self, fileName='result.png', openFile=True, title='SIR-model with M|M|s testing queue'):
@@ -220,9 +223,10 @@ class Model:
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
                       [self.Results['InfectedQueued'],
-                       self.Results['UninfectedQueued']],
-                      labels=['Infected', 'Uninfected'],
-                      colors=['salmon', 'lightgreen'])
+                       self.Results['SusceptibleQueued'],
+                       self.Results['RemovedQueued']],
+                      labels=['Infected', 'Susceptible',  'Removed'],
+                      colors=['salmon', 'lightgreen', 'dimgray'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.ylabel('queued')

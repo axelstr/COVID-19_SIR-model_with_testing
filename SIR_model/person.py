@@ -76,7 +76,7 @@ class Person:
         self.IsInfective = None
         self.IsSymptomatic = None
         self.WillIsolate = None
-        self.IsQueued = None
+        # self.IsQueued = None
         self.IsIsolated = None
         self.IsInfective = None
         self.IsSymptomatic = None
@@ -97,3 +97,6 @@ class Person:
                 self.IsQueued = False
                 self.WillIsolate = True
                 self.IsolateAt = t + self.TTestResult
+
+        if self.Stage == "R":
+            self.IsQueued = False
