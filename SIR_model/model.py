@@ -27,7 +27,7 @@ class Model:
                  rateSI=0.1,  # per timeStep
                  servers=1, serverMu=8, tTestResult=1, queuePrioritization='FIFO',  # serverMu: people/day
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
-                 pFalseSymptoms=0.01, tFalseRecovery=7,  # For S
+                 pFalseSymptoms=0, tFalseRecovery=7,  # For S
                  seed=None  # Specify with int for consistent result
                  ):
         """Runs automatically when a model object is created.
