@@ -77,17 +77,7 @@ class Model:
                           self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
 
-        results = {"Time": ts,
-                   "Susceptible": [],
-                   "Infected": [],
-                   "Removed": [],
-                   "InfectedAsymptomatic": [],
-                   "InfectedSymptomaticUnisolated": [],
-                   "InfectedIsolated": [],
-                   "InfectedInfectiveUnisolated": [],
-                   "InfectedQueued": [],
-                   "UninfectedQueued": [],
-                   "ExpectedWaitingTime": []}
+        results = Result({"Time": ts})
         self.__addResults(results, state)
 
         for t in ts[1:]:
@@ -129,7 +119,7 @@ class Model:
 
             self.__addResults(results, state)
 
-        self.Results = pd.DataFrame.from_dict(results)
+        self.Results = pd.DataFrame.from_dict(results.dictionary)
         self.HasModelRun = True
 
     def __addResults(self, results, state):
