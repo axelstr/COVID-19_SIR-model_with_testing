@@ -1,4 +1,5 @@
 from .poisson_randomizer import PoissonRandomizer
+from .exp_randomizer import ExpRandomizer
 import numpy as np
 
 
@@ -6,35 +7,46 @@ class Person:
     """Person object.
     """
 
-    def __init__(self, deseaseStage, pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult):
+    def __init__(self, deseaseStage, pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tRenegade):
         self.PoissonRandomizer = PoissonRandomizer()
+        self.ExpRandomizer = ExpRandomizer()
+
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
         self.TRecovery = tRecovery
         self.TFalseRecovery = tFalseRecovery
         self.TTestResult = tTestResult
-
-        self.Stage = deseaseStage
-        if deseaseStage == "I":
-            self.Infect(0)
+        self.TRenegade = tRenegade
 
         self.IsInfective = False
         self.WillBeSymptomatic = False
         self.IsSymptomatic = False
         self.ShouldQueue = False
         self.IsQueued = False
+        self.ShouldRenegade = False
         self.WillIsolate = False
         self.IsIsolated = False
         self.HasTestedPositive = False
         self.IsFalseSymptomatic = False
 
+        self.InfectiveAt = None
+        self.SymptomaticAt = None
+        self.RecoverAt = None
+        self.FalseRecoverAt = None
+        self.IsolateAt = None
+        self.RenegadesAt = None
+
+        self.Stage = deseaseStage
+        if deseaseStage == "I":
+            self.Infect(0)
+
     def Advance(self, t):
         """Advances the person to the current timestep.
         """
-        if self.Stage == "S":
-            if self.IsFalseSymptomatic:
-                if t >= self.FalseRecoverAt:
-                    self.FalseRecover(t)
+        if self.IsFalseSymptomatic:
+            if t >= self.FalseRecoverAt:
+                self.FalseRecover(t)
+
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
                 self.IsInfective = True
@@ -43,10 +55,22 @@ class Person:
                 self.IsSymptomatic = True
                 self.WillBeSymptomatic = False
                 self.ShouldQueue = True
+                self.RenegadesAt = None
+                self.ShouldRenegade = False
             if self.WillIsolate and (t >= self.IsolateAt):
                 self.Isolate(t)
             if t >= self.RecoverAt:
                 self.Recover(t)
+
+        if self.IsQueued and (not self.ShouldRenegade) and (self.TRenegade != None):
+            if (self.RenegadesAt == None):
+                if (not self.IsSymptomatic) and (not self.IsFalseSymptomatic):
+                    self.RenegadesAt = t + \
+                        self.ExpRandomizer.fromMean(self.TRenegade)
+            else:
+                if t >= self.RenegadesAt:
+                    self.ShouldRenegade = True
+                    self.RenegadesAt = None
 
     def Infect(self, t):
         """Infects a person with covid-19.
@@ -75,12 +99,17 @@ class Person:
         self.IsQueued = True
         self.QueuedAt = t
 
+    def Renegade(self, t):
+        """Renagades a person.
+        """
+        self.IsQueued = False
+        self.ShouldRenegade = False
+
     def Test(self, t):
         """Tests a person for covid-19. Schedules isolation when result is available.
         """
         if self.Stage == "S":
             self.IsQueued = False
-            self.IsSymptomatic = False
 
         elif self.Stage == "I":
             self.HasTestedPositive = True
