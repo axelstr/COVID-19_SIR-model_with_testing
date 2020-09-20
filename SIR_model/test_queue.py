@@ -33,7 +33,7 @@ class TestQueue:
             raise Exception(
                 f"Prioritization [{self.Prioritisation}] is not valid.")
 
-    def PopForOneDay(self):
+    def SimulateDay(self):
         """Simulates a day where each server handles a number of depending on serverMu.
         """
         # TODO: Implement queue with ExpRandomizer
@@ -45,6 +45,11 @@ class TestQueue:
             popped.append(self.Pop())
 
         return popped
+
+    def Renegade(self, idsToRenegade):
+        """Removes the given ids from the queue.
+        """
+        self.Queue = [id for id in self.Queue if (not id in idsToRenegade)]
 
     def GetExpectedWaitingTime(self):
         """The current, expected waiting time for the last person in the queue.

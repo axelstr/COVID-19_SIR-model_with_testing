@@ -25,10 +25,11 @@ class Model:
     def __init__(self, duration=150,  # days
                  susceptible=1000, infected=50, queued=0, removed=0,  # initial
                  rateSI=0.2,  # per timeStep
-                 servers=1, serverMu=1/8,  # serverMu: day/person
-                 tTestResult=1, queuePrioritization='FIFO',
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  pFalseSymptoms=0, tFalseRecovery=7,  # For S
+                 servers=1, serverMu=1/8,  # serverMu: day/person
+                 tTestResult=1, queuePrioritization='FIFO',
+                 tReneging=2,  # days, after revovery, None for no reneging
                  seed=None  # Specify with int for consistent result
                  ):
         """Runs automatically when a model object is created.
@@ -43,16 +44,17 @@ class Model:
         self.TotalIndividuals = susceptible + infected + removed
         self.RateSI = rateSI
 
-        self.Servers = servers
-        self.ServerMu = serverMu
-        self.TTestResult = tTestResult
-        self.QueuePrioritization = queuePrioritization
-
         self.PSymptomatic = pSymptomatic
         self.TSymptomatic = tSymptomatic
         self.TRecovery = tRecovery
         self.PFalseSymptoms = pFalseSymptoms
         self.TFalseRecovery = tFalseRecovery
+
+        self.Servers = servers
+        self.ServerMu = serverMu
+        self.TTestResult = tTestResult
+        self.QueuePrioritization = queuePrioritization
+        self.TReneging = tReneging
 
         self.Results = None
         self.HasModelRun = False
@@ -60,13 +62,13 @@ class Model:
         if seed != None:
             np.random.seed(seed)
 
-        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
+        self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                        for i in range(susceptible)] \
-            + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
+            + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(infected)] \
-            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
+            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(infected)] \
-            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult)
+            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tRenegin)
                for i in range(removed)]
 
     def run(self):
@@ -116,8 +118,17 @@ class Model:
             state.UpdateState(self.People, queue)
 
             # Test
-            for i in queue.PopForOneDay():
+            for i in queue.SimulateDay():
                 self.People[i].Test(t)
+            state.UpdateState(self.People, queue)
+
+            # Renegade
+            idsToRenegade = set()
+            for i, person in enumerate(self.People):
+                if person.ShouldRenegade:
+                    idsToRenegade.add(i)
+                    person.Renegade(t)
+            queue.Renegade(idsToRenegade)
             state.UpdateState(self.People, queue)
 
             self.__addResults(results, state)

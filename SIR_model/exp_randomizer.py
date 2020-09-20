@@ -11,4 +11,4 @@ class ExpRandomizer:
     def fromMean(self, mean):
         """Randomizes with the given mean as expected value.
         """
-        return np.random.exponential(1/mean)
+        return np.random.exponential(mean)
