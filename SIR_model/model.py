@@ -68,7 +68,7 @@ class Model:
                for i in range(infected)] \
             + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(infected)] \
-            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tRenegin)
+            + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(removed)]
 
     def run(self):
@@ -151,6 +151,7 @@ class Model:
         results['InfectedInfectiveUnisolated'].append(
             len(state.InfectedInfectiveUnisolatedIDs))
 
+        results['Queued'].append(len(state.QueuedIDs))
         results['SusceptibleQueued'].append(len(state.SusceptibleQueuedIDs))
         results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
         results['RemovedQueued'].append(len(state.RemovedQueuedIDs))
@@ -177,7 +178,10 @@ class Model:
         plt.ylabel('days')
         plt.title(title)
         plt.xlim(startTime, endTime)
-        plt.ylim(0)
+        if max(self.Results['ExpectedWaitingTime']) < 1 or self.Servers == 0:
+            plt.ylim(0, 1)
+        else:
+            plt.ylim(0)
         plt.tick_params(
             axis='x',
             which='both',
@@ -245,7 +249,10 @@ class Model:
         plt.ylabel('queued')
         plt.title(title)
         plt.xlim(startTime, endTime)
-        plt.ylim(0)
+        if max(self.Results['Queued']) < 1:
+            plt.ylim(0, 1)
+        else:
+            plt.ylim(0)
         plt.tick_params(
             axis='x',
             which='both',

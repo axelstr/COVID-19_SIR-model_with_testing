@@ -10,6 +10,8 @@ class ModelIdState:
                                enumerate(people) if p.Stage == "S"]
         self.InfectedIDs = [i for (i, p) in
                             enumerate(people) if p.Stage == "I"]
+        self.QueuedIDs = [i for (i, p) in
+                          enumerate(people) if p.IsQueued]
         self.RemovedIDs = [i for (i, p) in
                            enumerate(people) if p.Stage == "R"]
 
