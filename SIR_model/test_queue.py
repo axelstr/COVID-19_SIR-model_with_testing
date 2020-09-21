@@ -15,12 +15,12 @@ class TestQueue:
         self.Servers = servers
         self.ServerMu = serverMu
 
-    def Put(self, id):
+    def put(self, id):
         """Appends an element last in the queue.
         """
         self.Queue.append(id)
 
-    def Pop(self):
+    def pop(self):
         """Pops an element depending on the prioritization policy.
         FIFO: First.
         LIFO: Last.
@@ -33,7 +33,7 @@ class TestQueue:
             raise Exception(
                 f"Prioritization [{self.Prioritisation}] is not valid.")
 
-    def SimulateDay(self):
+    def simulateDay(self):
         """Simulates a day where each server handles a number of depending on serverMu.
         """
         # TODO: Implement queue with ExpRandomizer
@@ -42,16 +42,16 @@ class TestQueue:
         popped = []
 
         for _ in range(min(nItems, nItemsToPop)):
-            popped.append(self.Pop())
+            popped.append(self.pop())
 
         return popped
 
-    def Renegade(self, idsToRenegade):
+    def renegade(self, idsToRenegade):
         """Removes the given ids from the queue.
         """
         self.Queue = [id for id in self.Queue if (not id in idsToRenegade)]
 
-    def GetExpectedWaitingTime(self):
+    def getExpectedWaitingTime(self):
         """The current, expected waiting time for the last person in the queue.
         """
         if self.Servers == 0:
@@ -62,7 +62,7 @@ class TestQueue:
 
         return waitingTimeUntilServed + self.ServerMu
 
-    def GetQueueLength(self):
+    def getQueueLength(self):
         """The current number of people queued.
         """
         return len(self.Queue)

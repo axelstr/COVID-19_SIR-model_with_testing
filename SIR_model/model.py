@@ -74,7 +74,7 @@ class Model:
         ts = np.linspace(0, self.Duration, self.NTimeSteps)
 
         for person in self.People:
-            person.Advance(0)
+            person.advance(0)
         queue = TestQueue(self.Servers, self.ServerMu,
                           self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
@@ -85,8 +85,8 @@ class Model:
         for t in ts[1:]:
             # Advance people
             for person in self.People:
-                person.Advance(t)
-            state.UpdateState(self.People, queue)
+                person.advance(t)
+            state.updateState(self.People, queue)
 
             # Infect
             S_to_I_count = int(np.round((self.RateSI * len(state.SusceptibleIDs) * len(state.InfectedInfectiveUnisolatedIDs)) /
@@ -94,8 +94,8 @@ class Model:
             if S_to_I_count > 0:
                 S_to_I_Ids = random.sample(state.SusceptibleIDs, S_to_I_count)
                 for i in S_to_I_Ids:
-                    self.People[i].Infect(t)
-            state.UpdateState(self.People, queue)
+                    self.People[i].infect(t)
+            state.updateState(self.People, queue)
 
             # False symptoms
             S_to_FalseSymptoms_count = int(
@@ -104,29 +104,29 @@ class Model:
                 S_to_FalseSymptoms_Ids = random.sample(
                     state.SusceptibleNotQueuedIDs, S_to_FalseSymptoms_count)
                 for i in S_to_FalseSymptoms_Ids:
-                    self.People[i].FalseSymptomsInfect(t)
-            state.UpdateState(self.People, queue)
+                    self.People[i].falseSymptomsInfect(t)
+            state.updateState(self.People, queue)
 
             # Queue
             for i, person in enumerate(self.People):
                 if person.ShouldQueue:
-                    person.Queue(t)
-                    queue.Put(i)
-            state.UpdateState(self.People, queue)
+                    person.queue(t)
+                    queue.put(i)
+            state.updateState(self.People, queue)
 
             # Test
-            for i in queue.SimulateDay():
-                self.People[i].Test(t)
-            state.UpdateState(self.People, queue)
+            for i in queue.simulateDay():
+                self.People[i].test(t)
+            state.updateState(self.People, queue)
 
             # Renegade
             idsToRenegade = set()
             for i, person in enumerate(self.People):
                 if person.ShouldRenegade:
                     idsToRenegade.add(i)
-                    person.Renegade(t)
-            queue.Renegade(idsToRenegade)
-            state.UpdateState(self.People, queue)
+                    person.renegade(t)
+            queue.renegade(idsToRenegade)
+            state.updateState(self.People, queue)
 
             self.__addResults(results, state)
 

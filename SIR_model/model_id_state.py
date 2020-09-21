@@ -3,9 +3,9 @@ class ModelIdState:
     """
 
     def __init__(self, people, queue):
-        self.UpdateState(people, queue)
+        self.updateState(people, queue)
 
-    def UpdateState(self, people, queue):
+    def updateState(self, people, queue):
         self.SusceptibleIDs = [i for (i, p) in
                                enumerate(people) if p.Stage == "S"]
         self.InfectedIDs = [i for (i, p) in
@@ -43,11 +43,11 @@ class ModelIdState:
         self.RemovedQueuedIDs = [i for (i, p) in
                                  enumerate(people) if p.Stage == "R" and p.IsQueued]
 
-        self.ExpectedWaitingTime = queue.GetExpectedWaitingTime()
+        self.ExpectedWaitingTime = queue.getExpectedWaitingTime()
 
-        self.Control()
+        self.__control()
 
-    def Control(self):
+    def __control(self):
         totalInfected = len(self.InfectedIDs)
         asymptomatic = len(self.InfectedAsymptomaticUnisolatedIDs)
         symptomaticUnisolated = len(self.InfectedSymptomaticUnisolatedIDs)

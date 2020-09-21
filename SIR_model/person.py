@@ -38,14 +38,14 @@ class Person:
 
         self.Stage = deseaseStage
         if deseaseStage == "I":
-            self.Infect(0)
+            self.infect(0)
 
-    def Advance(self, t):
+    def advance(self, t):
         """Advances the person to the current timestep.
         """
         if self.IsFalseSymptomatic:
             if t >= self.FalseRecoverAt:
-                self.FalseRecover(t)
+                self.falseRecover(t)
 
         if self.Stage == "I":
             if (not self.IsInfective) and t >= self.InfectiveAt:
@@ -58,9 +58,9 @@ class Person:
                 self.RenegadesAt = None
                 self.ShouldRenegade = False
             if self.WillIsolate and (t >= self.IsolateAt):
-                self.Isolate(t)
+                self.isolate(t)
             if t >= self.RecoverAt:
-                self.Recover(t)
+                self.recover(t)
 
         if self.IsQueued and (not self.ShouldRenegade) and (self.TRenegade != None):
             if (self.RenegadesAt == None):
@@ -72,7 +72,7 @@ class Person:
                     self.ShouldRenegade = True
                     self.RenegadesAt = None
 
-    def Infect(self, t):
+    def infect(self, t):
         """Infects a person with covid-19.
         """
         self.Stage = "I"
@@ -84,7 +84,7 @@ class Person:
             self.SymptomaticAt = t + \
                 self.PoissonRandomizer.fromMean(self.TSymptomatic)
 
-    def FalseSymptomsInfect(self, t):
+    def falseSymptomsInfect(self, t):
         """Infects a person with false symtpoms (non-covid related illness).
         """
         self.ShouldQueue = True
@@ -92,20 +92,20 @@ class Person:
         self.FalseRecoverAt = t + \
             self.PoissonRandomizer.fromMean(self.TFalseRecovery)
 
-    def Queue(self, t):
+    def queue(self, t):
         """Tells a person object that it is queued.
         """
         self.ShouldQueue = False
         self.IsQueued = True
         self.QueuedAt = t
 
-    def Renegade(self, t):
+    def renegade(self, t):
         """Renagades a person.
         """
         self.IsQueued = False
         self.ShouldRenegade = False
 
-    def Test(self, t):
+    def test(self, t):
         """Tests a person for covid-19. Schedules isolation when result is available.
         """
         if self.Stage == "S":
@@ -124,12 +124,12 @@ class Person:
         if self.Stage == "R":
             self.IsQueued = False
 
-    def Isolate(self, t):
+    def isolate(self, t):
         self.IsIsolated = True
         self.WillIsolate = False
         self.IsolateAt = None
 
-    def Recover(self, t):
+    def recover(self, t):
         """Recovers a person from covid-19.
         """
         self.Stage = "R"
@@ -141,7 +141,7 @@ class Person:
         self.IsInfective = None
         self.IsSymptomatic = None
 
-    def FalseRecover(self, t):
+    def falseRecover(self, t):
         """Recovers a person from false symptomps.
         """
         self.IsFalseSymptomatic = False
