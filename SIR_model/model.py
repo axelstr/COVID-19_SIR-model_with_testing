@@ -168,7 +168,7 @@ class Model:
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
                       [self.Results['ExpectedWaitingTime']],
-                      labels=['Queue Length'],
+                      labels=[r'$E[T_{wait}]$'],
                       colors=['khaki'])
         plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
