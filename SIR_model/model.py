@@ -23,7 +23,7 @@ class Model:
     """
 
     def __init__(self, duration=150,  # days
-                 susceptible=1000, infected=50, queued=0, removed=0,  # initial
+                 susceptible=1000, infected=50, removed=0,  # initial
                  rateSI=0.2,  # per timeStep
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  pFalseSymptoms=0, tFalseRecovery=7,  # For S
@@ -39,7 +39,6 @@ class Model:
 
         self.InitialSusceptible = susceptible
         self.InitialInfected = infected
-        self.InitialQueued = queued
         self.InitialRemoved = removed
         self.TotalIndividuals = susceptible + infected + removed
         self.RateSI = rateSI
@@ -65,8 +64,6 @@ class Model:
         self.People = [Person("S", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                        for i in range(susceptible)] \
             + [Person("I", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
-               for i in range(infected)] \
-            + [Person("Q", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(infected)] \
             + [Person("R", pSymptomatic, tSymptomatic, tRecovery, tFalseRecovery, tTestResult, tReneging)
                for i in range(removed)]
