@@ -59,11 +59,16 @@ class TestQueue:
     def getExpectedQueueTime(self):
         """The current, expected waiting time for the last person in the queue.
         """
+        shouldRound = True
+
         if self.Servers == 0:
             return np.NaN
 
         queued = max(len(self.Queue)-len(self.Servers), 0)
         expectedQueueTime = queued*self.ServerMu/self.NServers
+
+        if shouldRound:
+            return int(np.round(expectedQueueTime))
 
         return expectedQueueTime
 

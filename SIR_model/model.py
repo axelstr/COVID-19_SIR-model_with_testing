@@ -79,7 +79,9 @@ class Model:
                           self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
 
-        results = Result({"Time": ts})
+        results = Result({"Time": ts,
+                          "ExpectedWaitTestResult": [self.TTestResult for i in range(len(ts))],
+                          "ExpectedWaitService": [self.ServerMu for i in range(len(ts))]})
         self.__addResults(results, state)
 
         for t in ts[1:]:
@@ -153,7 +155,9 @@ class Model:
         results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
         results['RemovedQueued'].append(len(state.RemovedQueuedIDs))
 
-        results['ExpectedWaitingTime'].append(state.ExpectedQueueTime)
+        results['ExpectedWaitQueue'].append(state.ExpectedWaitQueue)
+        results['ExpecteWaitTotal'].append(
+            self.TTestResult + self.ServerMu + state.ExpectedWaitQueue)
 
     def plot(self, fileName='result.png', openFile=True, title='SIR-model with M|M|s testing queue'):
         """Default plot of the result.
@@ -167,15 +171,15 @@ class Model:
 
         plt.subplot(3, 1, 1)
         plt.stackplot(self.Results['Time'],
-                      [self.Results['ExpectedWaitingTime']],
-                      labels=[r'$E[T_{wait}]$'],
-                      colors=['khaki'])
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-        plt.ylabel('days')
+                      [self.Results['ExpectedWaitTestResult'],
+                       self.Results['ExpectedWaitService'],
+                       self.Results['ExpectedWaitQueue']],
+                      labels=['Test result', 'Service', 'Queue'],
+                      colors=['cadetblue', 'darkkhaki', 'khaki'])
+        plt.ylabel(r'$E[T_{wait}]$ / days')
         plt.title(title)
         plt.xlim(startTime, endTime)
-        if max(self.Results['ExpectedWaitingTime']) < 1 or self.Servers == 0:
+        if max(self.Results['ExpecteWaitTotal']) < 1 or self.Servers == 0:
             plt.ylim(0, 1)
         else:
             plt.ylim(0)
@@ -185,6 +189,10 @@ class Model:
             bottom=False,
             top=False,
             labelbottom=False)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
 
         plt.subplot(3, 1, 2)
         plt.stackplot(self.Results['Time'],
@@ -194,8 +202,6 @@ class Model:
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
                       colors=['rosybrown', 'salmon', 'dimgray'])
         plt.ylabel('infected')
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
         plt.tick_params(
             axis='x',
@@ -203,6 +209,10 @@ class Model:
             bottom=False,
             top=False,
             labelbottom=False)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
+                   ncol=1, fancybox=True, shadow=True)
 
         plt.subplot(3, 1, 3)
         plt.stackplot(self.Results['Time'],
@@ -211,7 +221,9 @@ class Model:
                       colors=['salmon', 'lightgreen', 'dimgray'])
         plt.xlabel('days')
         plt.ylabel('population')
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
         plt.ylim(0, self.TotalIndividuals)
@@ -241,7 +253,9 @@ class Model:
                        self.Results['RemovedQueued']],
                       labels=['Infected', 'Susceptible',  'Removed'],
                       colors=['salmon', 'lightgreen', 'dimgray'])
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.ylabel('queued')
         plt.title(title)
@@ -265,7 +279,9 @@ class Model:
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
                       colors=['rosybrown', 'salmon', 'dimgray'])
         plt.ylabel('infected')
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
         plt.tick_params(
@@ -282,7 +298,9 @@ class Model:
                       colors=['salmon', 'lightgreen', 'dimgray'])
         plt.xlabel('days')
         plt.ylabel('population')
-        plt.legend(bbox_to_anchor=(1.1, 1), loc='right',
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles[::-1], labels[::-1],
+                   bbox_to_anchor=(1.1, 1), loc='right',
                    ncol=1, fancybox=True, shadow=True)
         plt.xlim(startTime, endTime)
         plt.ylim(0, self.TotalIndividuals)
