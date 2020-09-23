@@ -61,7 +61,7 @@ class TestQueue:
         """
         shouldRound = True
 
-        if self.Servers == 0:
+        if self.NServers == 0:
             return np.NaN
 
         queued = max(len(self.Queue)-len(self.Servers), 0)
