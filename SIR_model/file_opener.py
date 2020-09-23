@@ -4,6 +4,7 @@ import subprocess
 
 
 def openFile(fileName):
+    fileName = fileName.replace("/", "\\")
     if sys.platform == "win32":
         os.startfile(fileName, 'open')
     else:

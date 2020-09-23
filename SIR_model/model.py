@@ -17,12 +17,12 @@ class Model:
     """SIR-model with M|M|s testing queue.
     """
 
-    def __init__(self, duration=150,  # days
+    def __init__(self, duration=100,  # days
                  susceptible=1000, infected=50, removed=0,  # initial
-                 rateSI=0.158,  # per timeStep
-                 pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
-                 pFalseSymptoms=0, tFalseRecovery=7,  # For S
-                 servers=1, serverMu=1/8,  # serverMu: day/person
+                 rateSI=0.14,  # per timeStep
+                 pSymptomatic=.8, tSymptomatic=5, tRecovery=14,  # p-probability, t-time in  days
+                 pFalseSymptoms=0.01, tFalseRecovery=7,
+                 servers=1, serverMu=1/10,  # serverMu: day/person
                  tTestResult=1, queuePrioritization='FIFO',
                  tReneging=2,  # days, after revovery, None for no reneging
                  seed=None  # Specify with int for consistent result
@@ -66,14 +66,15 @@ class Model:
     def run(self):
         """Executes the simulation.
         """
-        ts = np.linspace(0, self.Duration, self.NTimeSteps)
-
         for person in self.People:
             person.advance(0)
         queue = TestQueue(self.NServers, self.ServerMu,
                           self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
 
+        ts = np.linspace(0, self.Duration, self.NTimeSteps)
+        self.StartTime = 0
+        self.EndTime = self.Duration
         results = Result({"Time": ts,
                           "ExpectedWaitTestResult": [self.TTestResult for i in range(len(ts))],
                           "ExpectedWaitService": [self.ServerMu for i in range(len(ts))]})
@@ -164,29 +165,40 @@ class Model:
         """
         self.__plot(fileName, shouldOpenFile, title, True)
 
-    def __plot(self, fileName='result.png', shouldOpenFile=True, title='SIR-model with M|M|s testing queue', queueDistributionPlot=False):
-        self.StartTime = 0
-        self.EndTime = max(self.Results['Time'])
+    def __assertModelHasRun(self):
         if not self.HasModelRun:
             raise Exception('Call Model.run() before plotting.')
 
+    def __plot(self, fileName='result.png', shouldOpenFile=True, title='SIR-model with M|M|s testing queue', queueDistributionPlot=False):
+        self.__assertModelHasRun()
         sns.set_theme(style="darkgrid")
 
         fig, axs = plt.subplots(3, 1)
         if queueDistributionPlot:
             self.plotQueueDistribution(axs[0])
         else:
-            self.plotQueueWaitTime(axs[0])
+            self.plotExpectedWaitTime(axs[0])
         axs[0].set_title(title)
         self.plotInfected(axs[1])
         self.plotSIR(axs[2])
+
+        for i in [0, 1]:
+            axs[i].tick_params(
+                axis='x',
+                which='both',
+                bottom=False,
+                top=False,
+                labelbottom=False)
+            axs[i].set_xlabel(None)
 
         fig.savefig(fileName, dpi=300)
 
         if shouldOpenFile:
             openFile(fileName)
 
-    def plotQueueWaitTime(self, ax):
+    def plotExpectedWaitTime(self, ax):
+        self.__assertModelHasRun()
+
         if self.NServers == 0:
             props = dict(boxstyle='round', facecolor='white', alpha=1)
             ax.text(.5, .5, r'$\infty$',
@@ -204,24 +216,21 @@ class Model:
                       self.Results['ExpectedWaitQueue']],
                      labels=['Test result', 'Service', 'Queue'],
                      colors=['cadetblue', 'darkkhaki', 'khaki'])
+        ax.set_xlabel('days')
         ax.set_ylabel(r'$E[T_{wait}]$ / days')
         ax.set_xlim(self.StartTime, self.EndTime)
         if max(self.Results['ExpecteWaitTotal']) < 1 or self.NServers == 0:
             ax.set_ylim(0, 1)
         else:
             ax.set_ylim(0)
-        ax.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            top=False,
-            labelbottom=False)
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles[::-1], labels[::-1],
                   bbox_to_anchor=(1.1, 1), loc='right',
                   ncol=1, fancybox=True, shadow=True)
 
     def plotQueueDistribution(self, ax):
+        self.__assertModelHasRun()
+
         ax.stackplot(self.Results['Time'],
                      [self.Results['InfectedQueued'],
                       self.Results['SusceptibleQueued'],
@@ -232,40 +241,34 @@ class Model:
         ax.legend(handles[::-1], labels[::-1],
                   bbox_to_anchor=(1.1, 1), loc='right',
                   ncol=1, fancybox=True, shadow=True)
+        ax.set_xlabel('days')
         ax.set_ylabel('queued')
         ax.set_xlim(self.StartTime, self.EndTime)
         if max(self.Results['Queued']) < 1:
             ax.set_ylim(0, 1)
         else:
             ax.set_ylim(0)
-        ax.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            top=False,
-            labelbottom=False)
 
     def plotInfected(self, ax):
+        self.__assertModelHasRun()
+
         ax.stackplot(self.Results['Time'],
                      [self.Results['InfectedAsymptomaticUnisolated'],
                       self.Results['InfectedSymptomaticUnisolated'],
                       self.Results['InfectedIsolated']],
                      labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
                      colors=['rosybrown', 'indianred', 'dimgray'])
+        ax.set_xlabel('days')
         ax.set_ylabel('infected')
         ax.set_xlim(self.StartTime, self.EndTime)
-        ax.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            top=False,
-            labelbottom=False)
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles[::-1], labels[::-1],
                   bbox_to_anchor=(1.1, 1), loc='right',
                   ncol=1, fancybox=True, shadow=True)
 
     def plotSIR(self, ax):
+        self.__assertModelHasRun()
+
         ax.stackplot(self.Results['Time'],
                      [self.Results['Infected'], self.Results['Susceptible'],
                       self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],

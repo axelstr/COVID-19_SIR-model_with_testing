@@ -20,7 +20,7 @@ model3.run()
 
 # ------- Plot -------
 fileName = 'images\\example_analysis.png'
-plt.subplot(3, 1, 1)
+plt.subplot(2, 1, 1)
 plt.stackplot(model1.Results['Time'],
               [model1.Results['Infected'], model1.Results['Susceptible'],
                model1.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
@@ -36,32 +36,17 @@ plt.tick_params(
     labelbottom=False)
 plt.xlim(min(model1.Results['Time']), max(model1.Results['Time']))
 plt.ylim(0, model1.TotalIndividuals)
-plt.title('Queue Analysis')
+plt.title('Server Analysis')
 
-plt.subplot(3, 1, 2)
+plt.subplot(2, 1, 2)
 plt.stackplot(model2.Results['Time'],
               [model2.Results['Infected'], model2.Results['Susceptible'],
                model2.Results['Removed']],
               colors=['salmon', 'lightgreen', 'dimgray'])
+plt.xlabel('days')
 plt.ylabel('2 servers')
-plt.tick_params(
-    axis='x',
-    which='both',
-    bottom=False,
-    top=False,
-    labelbottom=False)
 plt.xlim(min(model2.Results['Time']), max(model2.Results['Time']))
 plt.ylim(0, model2.TotalIndividuals)
-
-plt.subplot(3, 1, 3)
-plt.stackplot(model3.Results['Time'],
-              [model3.Results['Infected'], model3.Results['Susceptible'],
-               model3.Results['Removed']],
-              colors=['salmon', 'lightgreen', 'dimgray'])
-plt.ylabel('3 servers')
-plt.xlabel('days')
-plt.xlim(min(model3.Results['Time']), max(model3.Results['Time']))
-plt.ylim(0, model3.TotalIndividuals)
 
 plt.savefig(fileName, dpi=300)
 plt.close()
