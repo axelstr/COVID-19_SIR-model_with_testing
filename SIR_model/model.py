@@ -200,7 +200,7 @@ class Model:
                        self.Results['InfectedSymptomaticUnisolated'],
                        self.Results['InfectedIsolated']],
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
-                      colors=['rosybrown', 'salmon', 'dimgray'])
+                      colors=['rosybrown', 'indianred', 'dimgray'])
         plt.ylabel('infected')
         plt.xlim(startTime, endTime)
         plt.tick_params(
@@ -236,7 +236,7 @@ class Model:
                 opener = "open" if sys.platform == "darwin" else "xdg-open"
                 subprocess.call([opener, fileName])
 
-    def queuePlot(self, fileName='result_queue.png', openFile=True, title='Queue distribution'):
+    def queuePlot(self, fileName='result_queue_distribution.png', openFile=True, title='Queue distribution'):
         """Plot of the queue distribution.
         """
         startTime = 0
@@ -277,7 +277,7 @@ class Model:
                        self.Results['InfectedSymptomaticUnisolated'],
                        self.Results['InfectedIsolated']],
                       labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
-                      colors=['rosybrown', 'salmon', 'dimgray'])
+                      colors=['rosybrown', 'indianred', 'dimgray'])
         plt.ylabel('infected')
         handles, labels = plt.gca().get_legend_handles_labels()
         plt.legend(handles[::-1], labels[::-1],
