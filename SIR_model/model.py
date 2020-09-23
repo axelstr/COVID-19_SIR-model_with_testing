@@ -1,6 +1,4 @@
-# SIR Model with M|M|s queue for testing
-# SF2866 Applied Systems Engineering
-# Team Gamma
+# SIR Model with M|M|s testing-queue
 
 import pandas as pd
 import numpy as np
@@ -8,14 +6,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 
-import os
-import sys
-import subprocess
-
 from .person import Person
 from .test_queue import TestQueue
 from .model_id_state import ModelIdState
 from .result import Result
+from .file_opener import openFile
 
 
 class Model:
@@ -49,7 +44,7 @@ class Model:
         self.PFalseSymptoms = pFalseSymptoms
         self.TFalseRecovery = tFalseRecovery
 
-        self.Servers = servers
+        self.NServers = servers
         self.ServerMu = serverMu
         self.TTestResult = tTestResult
         self.QueuePrioritization = queuePrioritization
@@ -75,7 +70,7 @@ class Model:
 
         for person in self.People:
             person.advance(0)
-        queue = TestQueue(self.Servers, self.ServerMu,
+        queue = TestQueue(self.NServers, self.ServerMu,
                           self.QueuePrioritization)
         state = ModelIdState(self.People, queue)
 
@@ -159,156 +154,127 @@ class Model:
         results['ExpecteWaitTotal'].append(
             self.TTestResult + self.ServerMu + state.ExpectedWaitQueue)
 
-    def plot(self, fileName='result.png', openFile=True, title='SIR-model with M|M|s testing queue'):
+    def plot(self, fileName='result.png', shouldOpenFile=True, title='SIR-model with M|M|s testing queue'):
         """Default plot of the result.
         """
-        startTime = 0
-        endTime = max(self.Results['Time'])
-        if not self.HasModelRun:
-            raise Exception('Call Model.run() before plotting.')
+        self.__plot(fileName, shouldOpenFile, title)
 
-        sns.set_theme(style="darkgrid")
-
-        plt.subplot(3, 1, 1)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['ExpectedWaitTestResult'],
-                       self.Results['ExpectedWaitService'],
-                       self.Results['ExpectedWaitQueue']],
-                      labels=['Test result', 'Service', 'Queue'],
-                      colors=['cadetblue', 'darkkhaki', 'khaki'])
-        plt.ylabel(r'$E[T_{wait}]$ / days')
-        plt.title(title)
-        plt.xlim(startTime, endTime)
-        if max(self.Results['ExpecteWaitTotal']) < 1 or self.Servers == 0:
-            plt.ylim(0, 1)
-        else:
-            plt.ylim(0)
-        plt.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            top=False,
-            labelbottom=False)
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-
-        plt.subplot(3, 1, 2)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedAsymptomaticUnisolated'],
-                       self.Results['InfectedSymptomaticUnisolated'],
-                       self.Results['InfectedIsolated']],
-                      labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
-                      colors=['rosybrown', 'indianred', 'dimgray'])
-        plt.ylabel('infected')
-        plt.xlim(startTime, endTime)
-        plt.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            top=False,
-            labelbottom=False)
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-
-        plt.subplot(3, 1, 3)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['Infected'], self.Results['Susceptible'],
-                       self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
-                      colors=['salmon', 'lightgreen', 'dimgray'])
-        plt.xlabel('days')
-        plt.ylabel('population')
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-        plt.xlim(startTime, endTime)
-        plt.ylim(0, self.TotalIndividuals)
-        plt.savefig(fileName, dpi=300)
-        plt.close()
-        if openFile:
-            if sys.platform == "win32":
-                os.startfile(fileName, 'open')
-            else:
-                opener = "open" if sys.platform == "darwin" else "xdg-open"
-                subprocess.call([opener, fileName])
-
-    def queuePlot(self, fileName='result_queue_distribution.png', openFile=True, title='Queue distribution'):
+    def queueDistributionPlot(self, fileName='result_queue_distribution.png', shouldOpenFile=True, title='Queue distribution'):
         """Plot of the queue distribution.
         """
-        startTime = 0
-        endTime = max(self.Results['Time'])
+        self.__plot(fileName, shouldOpenFile, title, True)
+
+    def __plot(self, fileName='result.png', shouldOpenFile=True, title='SIR-model with M|M|s testing queue', queueDistributionPlot=False):
+        self.StartTime = 0
+        self.EndTime = max(self.Results['Time'])
         if not self.HasModelRun:
             raise Exception('Call Model.run() before plotting.')
 
         sns.set_theme(style="darkgrid")
 
-        plt.subplot(3, 1, 1)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedQueued'],
-                       self.Results['SusceptibleQueued'],
-                       self.Results['RemovedQueued']],
-                      labels=['Infected', 'Susceptible',  'Removed'],
-                      colors=['salmon', 'lightgreen', 'dimgray'])
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-        plt.ylabel('queued')
-        plt.title(title)
-        plt.xlim(startTime, endTime)
-        if max(self.Results['Queued']) < 1:
-            plt.ylim(0, 1)
+        fig, axs = plt.subplots(3, 1)
+        if queueDistributionPlot:
+            self.plotQueueDistribution(axs[0])
         else:
-            plt.ylim(0)
-        plt.tick_params(
+            self.plotQueueWaitTime(axs[0])
+        axs[0].set_title(title)
+        self.plotInfected(axs[1])
+        self.plotSIR(axs[2])
+
+        fig.savefig(fileName, dpi=300)
+
+        if shouldOpenFile:
+            openFile(fileName)
+
+    def plotQueueWaitTime(self, ax):
+        if self.NServers == 0:
+            props = dict(boxstyle='round', facecolor='white', alpha=1)
+            ax.text(.5, .5, r'$\infty$',
+                    transform=ax.transAxes, fontsize=20,
+                    verticalalignment='top', bbox=props,
+                    ha='center', va='center')
+            ax.set_ylabel(r'$E[T_{wait}]$ / days')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            return
+
+        ax.stackplot(self.Results['Time'],
+                     [self.Results['ExpectedWaitTestResult'],
+                      self.Results['ExpectedWaitService'],
+                      self.Results['ExpectedWaitQueue']],
+                     labels=['Test result', 'Service', 'Queue'],
+                     colors=['cadetblue', 'darkkhaki', 'khaki'])
+        ax.set_ylabel(r'$E[T_{wait}]$ / days')
+        ax.set_xlim(self.StartTime, self.EndTime)
+        if max(self.Results['ExpecteWaitTotal']) < 1 or self.NServers == 0:
+            ax.set_ylim(0, 1)
+        else:
+            ax.set_ylim(0)
+        ax.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1],
+                  bbox_to_anchor=(1.1, 1), loc='right',
+                  ncol=1, fancybox=True, shadow=True)
+
+    def plotQueueDistribution(self, ax):
+        ax.stackplot(self.Results['Time'],
+                     [self.Results['InfectedQueued'],
+                      self.Results['SusceptibleQueued'],
+                      self.Results['RemovedQueued']],
+                     labels=['Infected', 'Susceptible',  'Removed'],
+                     colors=['salmon', 'lightgreen', 'dimgray'])
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1],
+                  bbox_to_anchor=(1.1, 1), loc='right',
+                  ncol=1, fancybox=True, shadow=True)
+        ax.set_ylabel('queued')
+        ax.set_xlim(self.StartTime, self.EndTime)
+        if max(self.Results['Queued']) < 1:
+            ax.set_ylim(0, 1)
+        else:
+            ax.set_ylim(0)
+        ax.tick_params(
             axis='x',
             which='both',
             bottom=False,
             top=False,
             labelbottom=False)
 
-        plt.subplot(3, 1, 2)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['InfectedAsymptomaticUnisolated'],
-                       self.Results['InfectedSymptomaticUnisolated'],
-                       self.Results['InfectedIsolated']],
-                      labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
-                      colors=['rosybrown', 'indianred', 'dimgray'])
-        plt.ylabel('infected')
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-        plt.xlim(startTime, endTime)
-        plt.tick_params(
+    def plotInfected(self, ax):
+        ax.stackplot(self.Results['Time'],
+                     [self.Results['InfectedAsymptomaticUnisolated'],
+                      self.Results['InfectedSymptomaticUnisolated'],
+                      self.Results['InfectedIsolated']],
+                     labels=['Asymptomatic', 'Symptomatic', 'Isolated'],
+                     colors=['rosybrown', 'indianred', 'dimgray'])
+        ax.set_ylabel('infected')
+        ax.set_xlim(self.StartTime, self.EndTime)
+        ax.tick_params(
             axis='x',
             which='both',
             bottom=False,
             top=False,
             labelbottom=False)
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1],
+                  bbox_to_anchor=(1.1, 1), loc='right',
+                  ncol=1, fancybox=True, shadow=True)
 
-        plt.subplot(3, 1, 3)
-        plt.stackplot(self.Results['Time'],
-                      [self.Results['Infected'], self.Results['Susceptible'],
-                       self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
-                      colors=['salmon', 'lightgreen', 'dimgray'])
-        plt.xlabel('days')
-        plt.ylabel('population')
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles[::-1], labels[::-1],
-                   bbox_to_anchor=(1.1, 1), loc='right',
-                   ncol=1, fancybox=True, shadow=True)
-        plt.xlim(startTime, endTime)
-        plt.ylim(0, self.TotalIndividuals)
-        plt.savefig(fileName, dpi=300)
-        plt.close()
-        if openFile:
-            if sys.platform == "win32":
-                os.startfile(fileName, 'open')
-            else:
-                opener = "open" if sys.platform == "darwin" else "xdg-open"
-                subprocess.call([opener, fileName])
+    def plotSIR(self, ax):
+        ax.stackplot(self.Results['Time'],
+                     [self.Results['Infected'], self.Results['Susceptible'],
+                      self.Results['Removed']], labels=['Infected', 'Susceptible', 'Removed'],
+                     colors=['salmon', 'lightgreen', 'dimgray'])
+        ax.set_xlabel('days')
+        ax.set_ylabel('population')
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1],
+                  bbox_to_anchor=(1.1, 1), loc='right',
+                  ncol=1, fancybox=True, shadow=True)
+        ax.set_xlim(self.StartTime, self.EndTime)
+        ax.set_ylim(0, self.TotalIndividuals)
