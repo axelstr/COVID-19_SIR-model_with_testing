@@ -43,7 +43,7 @@ class ModelIdState:
         self.RemovedQueuedIDs = [i for (i, p) in
                                  enumerate(people) if p.Stage == "R" and p.IsQueued]
 
-        self.ExpectedWaitingTime = queue.getExpectedWaitingTime()
+        self.ExpectedQueueTime = queue.getExpectedQueueTime()
 
         self.__control()
 

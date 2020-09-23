@@ -1,18 +1,21 @@
 import numpy as np
 
-from .exp_randomizer import ExpRandomizer
+from .server import Server
 
 
 class TestQueue:
     """Testing queue object.
     """
 
-    def __init__(self, servers, serverMu, prioritisation):
-        self.ExpRandomizer = ExpRandomizer()
+    def __init__(self, nServers, serverMu, prioritisation):
         self.Prioritisation = prioritisation
 
         self.Queue = []
-        self.Servers = servers
+        # TODO: Test with 2.75
+        self.NServers = nServers
+        self.Servers = [Server(serverMu, 1) for n in range(int(nServers))]
+        if nServers % 1 != 0:
+            self.Servers.append(Server(serverMu, nServers % 1))
         self.ServerMu = serverMu
 
     def put(self, id):
@@ -36,10 +39,12 @@ class TestQueue:
     def simulateDay(self):
         """Simulates a day where each server handles a number of depending on serverMu.
         """
-        # TODO: Implement queue with ExpRandomizer
         nItems = len(self.Queue)
-        nItemsToPop = int(np.round(self.Servers/self.ServerMu))
+        nItemsToPop = 0
         popped = []
+
+        for server in self.Servers:
+            nItemsToPop += server.simulateDay()
 
         for _ in range(min(nItems, nItemsToPop)):
             popped.append(self.pop())
@@ -51,16 +56,16 @@ class TestQueue:
         """
         self.Queue = [id for id in self.Queue if (not id in idsToRenegade)]
 
-    def getExpectedWaitingTime(self):
+    def getExpectedQueueTime(self):
         """The current, expected waiting time for the last person in the queue.
         """
         if self.Servers == 0:
             return np.NaN
 
-        queued = max(len(self.Queue)-self.Servers, 0)
-        waitingTimeUntilServed = queued*self.ServerMu/self.Servers
+        queued = max(len(self.Queue)-len(self.Servers), 0)
+        expectedQueueTime = queued*self.ServerMu/self.NServers
 
-        return waitingTimeUntilServed + self.ServerMu
+        return expectedQueueTime
 
     def getQueueLength(self):
         """The current number of people queued.

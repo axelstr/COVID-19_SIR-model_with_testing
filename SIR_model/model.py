@@ -24,7 +24,7 @@ class Model:
 
     def __init__(self, duration=150,  # days
                  susceptible=1000, infected=50, removed=0,  # initial
-                 rateSI=0.2,  # per timeStep
+                 rateSI=0.158,  # per timeStep
                  pSymptomatic=.8, tSymptomatic=2, tRecovery=14,  # p-probability, t-time in  days
                  pFalseSymptoms=0, tFalseRecovery=7,  # For S
                  servers=1, serverMu=1/8,  # serverMu: day/person
@@ -153,7 +153,7 @@ class Model:
         results['InfectedQueued'].append(len(state.InfectedQueuedIDs))
         results['RemovedQueued'].append(len(state.RemovedQueuedIDs))
 
-        results['ExpectedWaitingTime'].append(state.ExpectedWaitingTime)
+        results['ExpectedWaitingTime'].append(state.ExpectedQueueTime)
 
     def plot(self, fileName='result.png', openFile=True, title='SIR-model with M|M|s testing queue'):
         """Default plot of the result.
