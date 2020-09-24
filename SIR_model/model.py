@@ -155,6 +155,15 @@ class Model:
         results['ExpecteWaitTotal'].append(
             self.TTestResult + self.ServerMu + state.ExpectedWaitQueue)
 
+    def oneplot(self):
+        return self.subplots(1, 1)
+
+    def subplots(self, nrows, ncols):
+        sns.set_theme(style="darkgrid")
+        fig, axs = plt.subplots(nrows, ncols)
+
+        return fig, axs
+
     def plot(self, fileName='result.png', shouldOpenFile=True, title='SIR-model with M|M|s testing queue'):
         """Default plot of the result.
         """

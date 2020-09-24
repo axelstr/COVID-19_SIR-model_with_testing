@@ -73,21 +73,19 @@ model2.run()
     model = SIR_model.Model()
     model.run()
     
-    sns.set_theme(style="darkgrid")
     fig, ax = plt.subplots(1, 1)
     model.plotSIR(ax)
     fig.savefig(dpi=300)
     ```
     
   - ![SIR_only](images/SIR_plot.png)
-
+  
 - *Example 2: All-plots*
 
   - ```python
     model = SIR_model.Model()
     model.run()
     
-    sns.set_theme(style="darkgrid")
     fig, axs = plt.subplots(2, 2)
     model.plotExpectedWaitTime(axs[0][0])
     model.plotQueueDistribution(axs[0][1])
