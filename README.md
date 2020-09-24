@@ -73,7 +73,7 @@ model2.run()
     model = SIR_model.Model()
     model.run()
     
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = model.oneplot()
     model.plotSIR(ax)
     fig.savefig(dpi=300)
     ```
@@ -86,7 +86,7 @@ model2.run()
     model = SIR_model.Model()
     model.run()
     
-    fig, axs = plt.subplots(2, 2)
+    fig, axs = model.subplots(2, 2)
     model.plotExpectedWaitTime(axs[0][0])
     model.plotQueueDistribution(axs[0][1])
     model.plotInfected(axs[1][0])
