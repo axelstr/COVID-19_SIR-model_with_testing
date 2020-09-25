@@ -70,29 +70,38 @@ model2.run()
 - *Example 1: Only SIR-plot*
 
   - ```python
-    model = SIR_model.Model()
+    from SIR_model import Model
+    
+    model = Model()
     model.run()
     
     fig, ax = model.oneplot()
     model.plotSIR(ax)
-    fig.savefig(dpi=300)
+    fig.savefig('SIR_plot.png', dpi=300)
     ```
-    
+
   - ![SIR_only](images/SIR_plot.png)
-  
+
 - *Example 2: All-plots*
 
   - ```python
-    model = SIR_model.Model()
+    from SIR_model import Model
+    
+    model = Model()
     model.run()
     
     fig, axs = model.subplots(2, 2)
+    
     model.plotExpectedWaitTime(axs[0][0])
     model.plotQueueDistribution(axs[0][1])
     model.plotInfected(axs[1][0])
     model.plotSIR(axs[1][1])
+    
+    model.removeTicksX(axs[0][0])
+    model.removeTicksX(axs[0][1])
+    
     fig.tight_layout()
-    fig.savefig(dpi=300)
+    fig.savefig('all_plots.png', dpi=300)
     ```
   - ![all_plots](images/all_plots.png)
 

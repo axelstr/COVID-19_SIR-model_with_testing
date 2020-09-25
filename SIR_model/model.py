@@ -189,16 +189,9 @@ class Model:
             self.plotExpectedWaitTime(axs[0])
         axs[0].set_title(title)
         self.plotInfected(axs[1])
+        self.removeTicksX(axs[1])
         self.plotSIR(axs[2])
-
-        for i in [0, 1]:
-            axs[i].tick_params(
-                axis='x',
-                which='both',
-                bottom=False,
-                top=False,
-                labelbottom=False)
-            axs[i].set_xlabel(None)
+        self.removeTicksX(axs[2])
 
         fig.savefig(fileName, dpi=300)
 
@@ -290,3 +283,21 @@ class Model:
                   ncol=1, fancybox=True, shadow=True)
         ax.set_xlim(self.StartTime, self.EndTime)
         ax.set_ylim(0, self.TotalIndividuals)
+
+    def removeTicksX(self, ax):
+        ax.tick_params(
+            axis='x',
+            which='both',
+            bottom=False,
+            top=False,
+            labelbottom=False)
+        ax.set_xlabel(None)
+
+    def removeTicksY(self, ax):
+        ax.tick_params(
+            axis='y',
+            which='both',
+            left=False,
+            right=False,
+            labelleft=False)
+        ax.set_ylabel(None)
